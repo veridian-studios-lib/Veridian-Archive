@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veridian Reader | The Inner Sanctum</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap" rel="stylesheet">
+    <style>
+        :root { --oak: #1A1108; --gold: #D4AF37; --paper: #F3F0E6; }
+        body { 
+            font-family: 'Fauna One', serif; background-color: #0F0A05; 
+            color: var(--gold); margin: 0; overflow: hidden;
+        }
+        .lux-serif { font-family: 'Cinzel', serif; letter-spacing: 0.2em; }
+
+        /* The 3D Stage */
+        .stage {
+            perspective: 2000px;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle, #23160d 0%, #0f0a05 100%);
+        }
+
+        /* The Physical Book */
+        .book {
+            position: relative;
+            width: 800px; /* Double page width */
+            height: 550px;
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease;
+            box-shadow: 0 50px 100px rgba(0,0,0,0.8);
+        }
+
+        /* Common Page Styles */
+        .page {
+            position: absolute;
+            width: 400px;
+            height: 100%;
+            top: 0;
+            background: var(--paper);
+            transform-origin: left;
+            transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+            transform-style: preserve-3d;
+            padding: 40px;
+            color: #1F150D;
+            box-shadow: inset 3px 0 10px rgba(0,0,0,0.1);
+        }
+
+        /* Left Page (Fixed) */
+        .page-left {
+            left: 0;
+            z-index: 1;
+            border-radius: 5px 0 0 5px;
+            background: linear-gradient(to right, #e8e4d8 0%, #F3F0E6 10%);
+        }
+
+        /* Right Page (The one that flips) */
+        .page-right {
+            right: 0;
+            z-index: 2;
+            border-radius: 0 5px 5px 0;
+            background: linear-gradient(to left, #e8e4d8 0%, #F3F0E6 10%);
+        }
+
+        /* The Spine Shadow */
+        .spine-shadow {
+            position: absolute;
+            left: 400px;
+            width: 40px;
+            height: 100%;
+            background: linear-gradient(to right, rgba(0,0,0,0.2), transparent);
+            z-index: 10;
+            transform: translateX(-50%);
+        }
+
+        /* Flip Animation */
+        .flipped { transform: rotateY(-180deg); }
+
+        /* Reading Glow */
+        .active-sentence {
+            background: rgba(212, 175, 55, 0.25);
+            transition: background 0.4s ease;
+            border-radius: 3px;
+        }
+
+        /* Brass Controls */
+        .controls {
+            position: fixed;
+            bottom: 50px;
+            display: flex;
+            gap: 40px;
+            align-items: center;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+    <button onclick="location.href='index.html'" class="fixed top-10 left-10 lux-serif text-xs hover:text-white transition-colors z-[100]">← LEAVE SANCTUM</button>
+
+    <div class="stage">
+        <div class="book" id="book-object">
+            <div class="spine-shadow"></div>
+            
+            <div class="page page-left">
+                <h3 class="lux-serif text-[10px] opacity-40 mb-8 uppercase">ARCHIVE VOLUME I</h3>
+                <div id="text-left" class="italic leading-relaxed text-lg opacity-60">
+                    The wisdom of the ancients is not found in the noise, but in the silence of the turning page...
+                </div>
+            </div>
+
+            <div class="page page-right" id="moving-page">
+                <div id="text-right" class="italic leading-loose text-xl">
+                    </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button onclick="prev()" class="text-3xl opacity-40 hover:opacity-100 transition-opacity">⏪</button>
+            <button id="play-btn" onclick="toggleReading()" class="w-20 h-20 border-2 border-[#D4AF37] rounded-full flex items-center justify-center text-3xl hover:bg-[#D4AF37] hover:text-[#0F0A05] transition-all shadow-2xl">▶️</button>
+            <button onclick="next()" class="text-3xl opacity-40 hover:opacity-100 transition-opacity">⏩</button>
+        </div>
+    </div>
+
+    <script>
+        const synth = window.speechSynthesis;
+        let isReading = false;
+        let currentLine = 0;
+        const libraryData = [
+            "A reader lives a thousand lives before he dies.",
+            "The man who never reads lives only one.",
+            "Wisdom is the gold of the soul, refined by time.",
+            "In this archive, every word is a sanctuary.",
+            "Let the voice of the past guide your future."
+        ];
+
+        function toggleReading() {
+            if (isReading) {
+                synth.cancel();
+                document.getElementById('play-btn').innerText = "▶️";
+            } else {
+                document.getElementById('play-btn').innerText = "⏸";
+                readCurrent();
+            }
+            isReading = !isReading;
+        }
+
+        function readCurrent() {
+            if (currentLine >= libraryData.length) {
+                isReading = false;
+                document.getElementById('play-btn').innerText = "▶️";
+                return;
+            }
+
+            const page = document.getElementById('moving-page');
+            const content = document.getElementById('text-right');
+            
+            // 1. Physical Flip Logic
+            page.classList.add('flipped');
+            playPaperSound();
+            
+            setTimeout(() => {
+                content.innerHTML = `<span class="active-sentence">${libraryData[currentLine]}</span>`;
+                page.classList.remove('flipped');
+                
+                // 2. Grave Narrator Logic
+                const utter = new SpeechSynthesisUtterance(libraryData[currentLine]);
+                const voices = synth.getVoices();
+                utter.voice = voices.find(v => v.name.includes('Google US English')) || voices[0];
+                utter.pitch = 0.6; // Deep/Grave
+                utter.rate = 0.8;  // Elegant/Slow
+                
+                utter.onend = () => {
+                    if (isReading) {
+                        currentLine++;
+                        setTimeout(readCurrent, 800);
+                    }
+                };
+                synth.speak(utter);
+            }, 600);
+        }
+
+        function playPaperSound() {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'brown-noise' || 'white-noise';
+            gain.gain.setValueAtTime(0.02, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.5);
+        }
+
+        function next() { synth.cancel(); currentLine++; readCurrent(); }
+        function prev() { synth.cancel(); currentLine = Math.max(0, currentLine - 1); readCurrent(); }
+    </script>
+</body>
+</html>
