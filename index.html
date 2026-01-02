@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veridian Archive | The Grand Gallery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap" rel="stylesheet">
+    <style>
+        :root { --oak: #1A1108; --gold: #D4AF37; --forest: #2D4236; --paper: #F3F0E6; }
+        body { font-family: 'Fauna One', serif; background-color: #0F0A05; color: var(--gold); margin: 0; overflow-x: hidden; }
+        .lux-serif { font-family: 'Cinzel', serif; letter-spacing: 0.3em; }
+
+        /* The Oak Shelf Layout */
+        .shelf-container { 
+            background-color: var(--oak);
+            background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
+            min-height: 100vh;
+            padding: 120px 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 60px;
+        }
+
+        .book-artifact {
+            height: 320px; background: var(--paper); border-left: 14px solid var(--forest);
+            border-radius: 0 10px 10px 0; box-shadow: 25px 25px 60px rgba(0,0,0,0.9);
+            cursor: pointer; transition: 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex; align-items: flex-end; padding: 25px; position: relative;
+        }
+        .book-artifact:hover { transform: translateY(-25px) rotateY(-15px); border-left-color: var(--gold); }
+        
+        /* The Bloom Hub (Bottom Left) */
+        .hub-btn { width: 75px; height: 75px; background: var(--gold); color: var(--oak); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; position: fixed; bottom: 40px; left: 40px; z-index: 100; box-shadow: 0 15px 40px rgba(0,0,0,0.8); transition: 0.5s; }
+        .menu-bloom { position: absolute; bottom: 95px; left: 0; display: flex; flex-direction: column; gap: 20px; transition: 0.5s; opacity: 0; pointer-events: none; transform: translateY(20px); }
+        .menu-bloom.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        .sub-btn { width: 60px; height: 60px; border-radius: 50%; background: var(--forest); color: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: bold; box-shadow: 0 10px 20px rgba(0,0,0,0.6); }
+    </style>
+</head>
+<body>
+
+    <div id="quote-screen" class="fixed inset-0 z-[200] flex flex-col items-center justify-center text-center px-10 bg-[#0F0A05]" onclick="enterArchive()">
+        <p class="text-2xl md:text-4xl italic mb-10 text-[#E2DFD2] tracking-wide">"A reader lives a thousand lives before he dies..."</p>
+        <span class="lux-serif text-xs opacity-40 animate-pulse">TOUCH TO STEP INSIDE</span>
+    </div>
+
+    <div id="main-gallery" class="hidden opacity-0 transition-opacity duration-1000">
+        <header class="text-center pt-24 pb-12 bg-[#0F0A05]">
+            <h1 class="lux-serif text-4xl md:text-6xl text-white mb-8">VERIDIAN ARCHIVE</h1>
+            <input type="text" placeholder="Search Wisdom..." class="bg-transparent border-b border-[#D4AF37]/20 py-4 w-72 text-center focus:outline-none text-[#D4AF37] italic text-xl placeholder-[#D4AF37]/30">
+        </header>
+
+        <div class="shelf-container">
+            <div class="book-artifact" onclick="location.href='reader.html?id=1'">
+                <span class="lux-serif text-[#1A1108] text-[10px] font-extrabold uppercase leading-loose">Volume I<br>The Foundation</span>
+            </div>
+            </div>
+
+        <div class="hub-btn" onclick="toggleMenu()" id="main-hub">
+            <span id="plus">+</span>
+            <div id="bloom" class="menu-bloom">
+                <button class="sub-btn">UPLOAD</button>
+                <button class="sub-btn">SOCIALS</button>
+                <button class="sub-btn">ORIGIN</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function enterArchive() {
+            document.getElementById('quote-screen').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('quote-screen').classList.add('hidden');
+                const gallery = document.getElementById('main-gallery');
+                gallery.classList.remove('hidden');
+                setTimeout(() => gallery.classList.add('opacity-100'), 50);
+            }, 1500);
+        }
+        function toggleMenu() {
+            const bloom = document.getElementById('bloom');
+            const plus = document.getElementById('plus');
+            bloom.classList.toggle('active');
+            plus.style.transform = bloom.classList.contains('active') ? "rotate(45deg)" : "rotate(0deg)";
+        }
+    </script>
+</body>
+</html>
