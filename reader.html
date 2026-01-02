@@ -3,193 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Veridian Archive | The Masterpiece Reader</title>
+    <title>Veridian Reader | Premium Sanctuary</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap" rel="stylesheet">
     <style>
-        :root { --oak: #1A1108; --gold: #D4AF37; --paper: #F3F0E6; --ink: #1F150D; }
+        :root { --oak: #1A1108; --gold: #D4AF37; --paper: #F3F0E6; }
         body { 
             font-family: 'Fauna One', serif; background-color: #0F0A05; 
-            margin: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh;
+            margin: 0; overflow: hidden; display: flex; flex-direction: column; height: 100vh;
         }
 
-        /* 3D Scene Setup */
-        .scene {
-            perspective: 2500px;
-            width: 100%;
-            display: flex;
-            justify-content: center;
+        /* Responsive 3D Viewport */
+        .viewport {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            perspective: 3000px; padding: 20px;
         }
 
-        .book {
-            position: relative;
-            width: 900px; /* Total spread width */
-            height: 600px;
-            transform-style: preserve-3d;
-            transition: transform 0.5s;
+        .book-frame {
+            position: relative; width: 100%; max-width: 800px; height: 500px;
+            transform-style: preserve-3d; transition: transform 0.8s ease;
         }
 
         /* The Pages */
         .page {
-            position: absolute;
-            width: 450px;
-            height: 100%;
-            top: 0;
-            background: var(--paper);
-            transform-origin: left;
+            position: absolute; width: 50%; height: 100%; top: 0;
+            background: var(--paper); transform-style: preserve-3d;
             transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1);
-            transform-style: preserve-3d;
-            box-shadow: inset 3px 0 20px rgba(0,0,0,0.1);
-            cursor: pointer;
-            padding: 50px;
-            border-radius: 0 5px 5px 0;
+            padding: 40px; box-shadow: inset 2px 0 15px rgba(0,0,0,0.1);
         }
 
-        .page-left {
-            left: 0;
+        .left-page {
+            left: 0; transform-origin: right; border-radius: 8px 0 0 8px;
+            background: linear-gradient(to right, #e2ddd1 0%, var(--paper) 10%);
             z-index: 1;
-            border-radius: 5px 0 0 5px;
-            background: linear-gradient(to right, #e0ddd0 0%, var(--paper) 15%);
         }
 
-        /* Flipping Logic */
-        .flipping { transform: rotateY(-180deg); z-index: 10 !important; }
+        .right-page {
+            right: 0; transform-origin: left; border-radius: 0 8px 8px 0;
+            background: linear-gradient(to left, #e2ddd1 0%, var(--paper) 10%);
+            z-index: 2;
+        }
 
-        /* Content Styling */
-        .content-text { color: var(--ink); line-height: 2.2; font-style: italic; font-size: 1.25rem; }
-        .lux-header { font-family: 'Cinzel'; font-size: 0.7rem; letter-spacing: 0.4em; color: rgba(0,0,0,0.4); margin-bottom: 2rem; }
+        /* THE CURVY FLIP: Moves up (Z) and rotates (Y) */
+        .flip-action {
+            transform: rotateY(-180deg) translateZ(50px) scale(0.95);
+            z-index: 10 !important;
+        }
 
-        /* Refined Controls */
-        .gold-nav {
-            position: fixed;
-            bottom: 40px;
-            display: flex;
-            gap: 60px;
-            align-items: center;
+        /* Gold Highlighting */
+        .highlight-gold {
+            color: #1a1108;
+            background: rgba(212, 175, 55, 0.2);
+            text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+            border-radius: 4px; padding: 0 4px;
+            transition: all 0.5s ease;
         }
-        .nav-icon {
-            color: var(--gold);
-            font-size: 1.5rem;
-            opacity: 0.5;
-            transition: 0.3s;
-            background: none;
-            border: none;
-            cursor: pointer;
-        }
-        .nav-icon:hover { opacity: 1; transform: scale(1.1); }
-        .play-ring {
-            width: 70px; height: 70px; border: 1px solid var(--gold); border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-        }
+
+        .content-area { font-size: 1.15rem; line-height: 2.2; color: #2c1e14; text-align: justify; font-style: italic; }
+
+        /* Navigation Icons */
+        .nav-bar { height: 120px; display: flex; justify-content: center; align-items: center; gap: 50px; }
+        .nav-btn { color: var(--gold); font-size: 1.8rem; opacity: 0.4; transition: 0.4s; background: none; border: none; cursor: pointer; }
+        .nav-btn:hover { opacity: 1; transform: scale(1.2); }
+        .play-outer { width: 60px; height: 60px; border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
-    <div class="scene">
-        <div class="book" id="archive-book">
-            <div class="page page-left">
-                <div class="lux-header">PREVIOUS THOUGHT</div>
-                <div id="left-text" class="content-text opacity-40">...</div>
+    <button onclick="location.href='index.html'" class="fixed top-8 left-8 text-[#D4AF37] opacity-40 hover:opacity-100 uppercase text-[10px] tracking-widest z-50">← Archive</button>
+
+    <div class="viewport">
+        <div class="book-frame" id="main-book">
+            <div class="page left-page">
+                <span class="text-[9px] uppercase tracking-[0.3em] opacity-30">Archive Volume I</span>
+                <div id="text-history" class="content-area mt-8 opacity-40">...</div>
             </div>
 
-            <div class="page" id="right-page" style="right:0; z-index: 5;">
-                <div class="lux-header">CURRENT WISDOM</div>
-                <div id="right-text" class="content-text">Initializing the archive...</div>
+            <div class="page right-page" id="flip-sheet">
+                <span class="text-[9px] uppercase tracking-[0.3em] opacity-30">Active Insight</span>
+                <div id="text-active" class="content-area mt-8">
+                    </div>
             </div>
         </div>
     </div>
 
-    <div class="gold-nav">
-        <button onclick="prevPage()" class="nav-icon">◁</button>
-        <div class="play-ring">
-            <button onclick="toggleNarrator()" id="master-play" class="nav-icon" style="opacity:1">▶</button>
+    <div class="nav-bar">
+        <button onclick="changePage(-1)" class="nav-btn">◁</button>
+        <div class="play-outer">
+            <button onclick="toggleNarrator()" id="play-trigger" class="nav-btn" style="opacity:1">▶</button>
         </div>
-        <button onclick="nextPage()" class="nav-icon">▷</button>
+        <button onclick="changePage(1)" class="nav-btn">▷</button>
     </div>
 
     <script>
         const wisdom = [
             "A reader lives a thousand lives before he dies. The man who never reads lives only one.",
+            "Nature does not hurry, yet everything is accomplished. Find your own oak-like stillness.",
             "Wisdom is not a product of schooling but of the lifelong attempt to acquire it.",
-            "In the sanctuary of silence, the soul finds its rhythm and the mind finds its peace.",
-            "Nature does not hurry, yet everything is accomplished. Be like the oak.",
-            "The golden path is paved with the words of those who walked before us."
+            "In the sanctuary of silence, the soul finds its rhythm and the heart finds its home.",
+            "Let the golden words of the past illuminate the path of your future."
         ];
 
-        let currentPage = 0;
-        let isSpeaking = false;
+        let idx = 0;
+        let isNarrationOn = false;
         const synth = window.speechSynthesis;
 
-        function updatePageContent() {
-            document.getElementById('right-text').innerText = wisdom[currentPage];
-            document.getElementById('left-text').innerText = currentPage > 0 ? wisdom[currentPage - 1] : "The beginning of silence.";
-        }
-
-        function nextPage() {
-            if (currentPage >= wisdom.length - 1) return;
+        function refreshContent() {
+            const active = document.getElementById('text-active');
+            const history = document.getElementById('text-history');
             
-            const p = document.getElementById('right-page');
-            p.classList.add('flipping');
-            playCrispySound();
-
-            setTimeout(() => {
-                currentPage++;
-                updatePageContent();
-                p.classList.remove('flipping');
-                if(isSpeaking) speak();
-            }, 600);
+            // Wrap in highlight span for narrator
+            active.innerHTML = `<span id="current-phrase">${wisdom[idx]}</span>`;
+            history.innerText = idx > 0 ? wisdom[idx - 1] : "";
         }
 
-        function prevPage() {
-            if (currentPage <= 0) return;
-            currentPage--;
-            updatePageContent();
-            playCrispySound();
+        function changePage(dir) {
+            if (dir === 1 && idx < wisdom.length - 1) {
+                const sheet = document.getElementById('flip-sheet');
+                sheet.classList.add('flip-action');
+                playCrispy();
+                
+                setTimeout(() => {
+                    idx++;
+                    refreshContent();
+                    sheet.classList.remove('flip-action');
+                    if(isNarrationOn) speakNow();
+                }, 900);
+            } else if (dir === -1 && idx > 0) {
+                idx--;
+                refreshContent();
+                playCrispy();
+            }
         }
 
         function toggleNarrator() {
-            if (isSpeaking) {
+            if (isNarrationOn) {
                 synth.cancel();
-                document.getElementById('master-play').innerText = "▶";
+                document.getElementById('play-trigger').innerText = "▶";
             } else {
-                document.getElementById('master-play').innerText = "‖";
-                speak();
+                document.getElementById('play-trigger').innerText = "‖";
+                speakNow();
             }
-            isSpeaking = !isSpeaking;
+            isNarrationOn = !isNarrationOn;
         }
 
-        function speak() {
+        function speakNow() {
             synth.cancel();
-            const utter = new SpeechSynthesisUtterance(wisdom[currentPage]);
-            utter.pitch = 0.65; // Grave/Deep
-            utter.rate = 0.85; // Elegant/Slow
+            const phrase = document.getElementById('current-phrase');
+            phrase.classList.add('highlight-gold');
+
+            const utter = new SpeechSynthesisUtterance(wisdom[idx]);
+            utter.pitch = 0.6; // Grave
+            utter.rate = 0.8;  // Elegant
             
             utter.onend = () => {
-                if (isSpeaking && currentPage < wisdom.length - 1) {
-                    setTimeout(nextPage, 1000);
+                phrase.classList.remove('highlight-gold');
+                if (isNarrationOn && idx < wisdom.length - 1) {
+                    setTimeout(() => changePage(1), 800);
                 }
             };
             synth.speak(utter);
         }
 
-        function playCrispySound() {
+        function playCrispy() {
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const bufferSize = audioCtx.sampleRate * 0.3;
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
-            const noise = audioCtx.createBufferSource();
-            noise.buffer = buffer;
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'highpass'; filter.frequency.value = 1500;
+            const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-            noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
-            noise.start();
+            osc.type = 'brown-noise'; 
+            gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start();
         }
 
-        updatePageContent();
+        refreshContent();
     </script>
 </body>
 </html>
