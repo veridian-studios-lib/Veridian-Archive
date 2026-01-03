@@ -58,7 +58,6 @@
             box-shadow: 0 40px 80px rgba(212, 175, 55, 0.15);
         }
 
-        /* Fixed Bloom Hub Logic */
         .hub-container {
             position: fixed; bottom: 40px; left: 40px; z-index: 100;
             display: flex; flex-direction: column; align-items: center; gap: 20px;
@@ -97,7 +96,7 @@
             <input type="text" placeholder="Search Wisdom..." class="bg-transparent border-b border-[#D4AF37]/20 py-3 w-72 text-center focus:outline-none text-[#D4AF37] italic text-xl">
         </header>
 
-        <div class="shelf-horizontal flex-1 flex items-center">
+        <div id="shelf" class="shelf-horizontal flex-1 flex items-center">
             <div class="book-artifact" onclick="location.href='reader.html?id=1'">
                 <span class="lux-serif text-[#1A1108] text-[11px] font-extrabold uppercase leading-loose">Volume I<br>The Foundation</span>
             </div>
@@ -107,11 +106,11 @@
             <div class="book-artifact" onclick="location.href='reader.html?id=3'">
                 <span class="lux-serif text-[#1A1108] text-[11px] font-extrabold uppercase leading-loose">Volume III<br>Ancient Silence</span>
             </div>
-        </div>
+            </div>
 
         <div class="hub-container">
             <div id="bloom" class="menu-bloom">
-                <button class="sub-btn">UPLOAD</button>
+                <button class="sub-btn" onclick="window.location.href='upload.html'">UPLOAD</button>
                 <button class="sub-btn">SOCIALS</button>
                 <button class="sub-btn" onclick="goToOrigin(event)">ORIGIN</button>
             </div>
@@ -129,6 +128,7 @@
                 const gallery = document.getElementById('main-gallery');
                 gallery.classList.remove('hidden');
                 setTimeout(() => gallery.classList.add('opacity-100'), 50);
+                loadUploadedBooks(); // Load books once gallery is visible
             }, 1000);
         }
 
@@ -140,9 +140,28 @@
         }
 
         function goToOrigin(event) {
-            // This prevents the menu from closing and forces the page jump
             event.stopPropagation();
             window.location.href = 'origin.html';
+        }
+
+        // --- DYNAMIC BOOK LOADING ENGINE ---
+        function loadUploadedBooks() {
+            const shelf = document.getElementById('shelf');
+            const library = JSON.parse(localStorage.getItem('veridian_library')) || [];
+
+            library.forEach(book => {
+                const bookDiv = document.createElement('div');
+                bookDiv.className = 'book-artifact';
+                // Pass the unique ID to the reader
+                bookDiv.onclick = () => window.location.href = `reader.html?id=${book.id}`;
+                
+                bookDiv.innerHTML = `
+                    <span class="lux-serif text-[#1A1108] text-[11px] font-extrabold uppercase leading-loose">
+                        ${book.title}<br>${book.author || 'Unknown'}
+                    </span>
+                `;
+                shelf.appendChild(bookDiv);
+            });
         }
     </script>
 </body>
