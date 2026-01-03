@@ -39,7 +39,6 @@
             transform-origin: left center; overflow: hidden;
         }
 
-        /* Forward Peel */
         .ghost-forward {
             position: absolute; inset: 0; background: var(--paper);
             border-radius: 10px 40px 40px 10px; padding: clamp(20px, 5vw, 40px);
@@ -48,7 +47,6 @@
         }
         .peel-to-left { transform: rotateY(-120deg) skewY(-10deg) translateZ(100px); opacity: 0; }
 
-        /* Backward Peel */
         .ghost-backward {
             position: absolute; inset: 0; background: var(--paper);
             border-radius: 10px 40px 40px 10px; padding: clamp(20px, 5vw, 40px);
@@ -98,8 +96,8 @@
     </div>
 
     <script>
-        // Default text if no book found
         let archive = [["The vault is currently silent.", "Sacrifice a scroll to begin the journey."]];
+        let currentMetadata = { title: "Veridian Scroll", author: "The Archive" };
         
         const staticBooks = {
             "1": [["A reader lives a thousand lives before he dies.", "The man who never reads lives only one.", "Books are a uniquely portable magic."]],
@@ -109,28 +107,59 @@
 
         let pIdx = 0; let sIdx = 0; let isPlaying = false;
         const synth = window.speechSynthesis;
-        let audioCtx;
+        let audioCtx, heartbeat;
         let touchStartX = 0;
 
-        // --- DEEP VAULT LOADER ---
         async function loadBookData() {
             const params = new URLSearchParams(window.location.search);
             const bookId = params.get('id');
 
             if (staticBooks[bookId]) {
                 archive = staticBooks[bookId];
+                currentMetadata.title = "Ancient Volume " + bookId;
             } else {
                 try {
                     const library = await localforage.getItem('veridian_library') || [];
                     const found = library.find(b => b.id === bookId);
                     if (found) {
-                        // Reconstruct archive format: Array of Pages, each page an Array of Sentences
+                        currentMetadata.title = found.title;
+                        currentMetadata.author = found.author;
                         archive = found.content.map(pageArray => {
-                            // Split long text into manageable sentences for the Grave Narrator
                             return pageArray[0].match(/[^.!?]+[.!?]+/g) || [pageArray[0]];
                         });
                     }
                 } catch (e) { console.error("Vault Error", e); }
+            }
+            updateMediaSession();
+        }
+
+        // --- BACKGROUND POWER: HEARTBEAT & MEDIA SESSION ---
+        function startHeartbeat() {
+            if (!audioCtx) return;
+            const silence = audioCtx.createBuffer(1, 44100, 44100);
+            heartbeat = audioCtx.createBufferSource();
+            heartbeat.buffer = silence;
+            heartbeat.loop = true;
+            heartbeat.connect(audioCtx.destination);
+            heartbeat.start();
+        }
+
+        function stopHeartbeat() {
+            if (heartbeat) { heartbeat.stop(); heartbeat = null; }
+        }
+
+        function updateMediaSession() {
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: currentMetadata.title,
+                    artist: currentMetadata.author,
+                    album: 'Veridian Archive',
+                    artwork: [{ src: 'https://via.placeholder.com/512/0F0A05/D4AF37?text=Veridian', sizes: '512x512', type: 'image/png' }]
+                });
+                navigator.mediaSession.setActionHandler('play', toggleAudio);
+                navigator.mediaSession.setActionHandler('pause', toggleAudio);
+                navigator.mediaSession.setActionHandler('previoustrack', () => skipSentence(-1));
+                navigator.mediaSession.setActionHandler('nexttrack', () => skipSentence(1));
             }
         }
 
@@ -153,7 +182,6 @@
             if ((dir === 1 && pIdx < archive.length - 1) || (dir === -1 && pIdx > 0)) {
                 const stage = document.getElementById('book-stage');
                 const ghost = document.createElement('div');
-                
                 if (dir === 1) {
                     ghost.className = 'ghost-forward';
                     ghost.innerHTML = mainPage.innerHTML;
@@ -167,7 +195,6 @@
                     stage.appendChild(ghost);
                     setTimeout(() => ghost.classList.add('return-to-center'), 10);
                 }
-                
                 playSFX();
                 setTimeout(() => ghost.remove(), 1200);
                 if (isPlaying) speak();
@@ -203,8 +230,18 @@
 
         function toggleAudio() {
             if (audioCtx) audioCtx.resume();
-            if (isPlaying) { synth.cancel(); document.getElementById('play-btn').innerText = "▶"; } 
-            else { document.getElementById('play-btn').innerText = "‖"; speak(); }
+            if (isPlaying) { 
+                synth.cancel(); 
+                stopHeartbeat();
+                document.getElementById('play-btn').innerText = "▶"; 
+                if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "paused";
+            } 
+            else { 
+                document.getElementById('play-btn').innerText = "‖"; 
+                startHeartbeat();
+                speak(); 
+                if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "playing";
+            }
             isPlaying = !isPlaying;
         }
 
@@ -213,7 +250,7 @@
             synth.cancel();
             updateHighlight();
             const msg = new SpeechSynthesisUtterance(archive[pIdx][sIdx]);
-            msg.pitch = 0.6; msg.rate = 0.85; // Grave Narrator Tone
+            msg.pitch = 0.6; msg.rate = 0.85; 
             msg.onend = () => {
                 if (isPlaying) {
                     if (sIdx < archive[pIdx].length - 1) { sIdx++; setTimeout(speak, 400); } 
