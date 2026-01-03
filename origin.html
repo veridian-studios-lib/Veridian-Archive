@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Origin | Veridian Sanctuary</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #D4AF37; --paper: #F3F0E6; }
+        body { 
+            font-family: 'Fauna One', serif; background: #050505;
+            margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh;
+            color: var(--paper); overflow-y: auto;
+        }
+
+        .lamp-glow {
+            position: fixed; inset: 0;
+            background: radial-gradient(circle at 50% 10%, rgba(212, 175, 55, 0.15) 0%, transparent 70%);
+            pointer-events: none; z-index: 1;
+        }
+
+        .container {
+            max-width: 650px; width: 90%; z-index: 10; padding: 40px 0;
+            animation: fadeIn 1.5s ease-out; /* Faster fade-in */
+        }
+
+        .manifesto {
+            background: rgba(20, 15, 10, 0.8);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            padding: 40px; border-radius: 4px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .story-text { line-height: 2.2; text-align: justify; font-size: 1.1rem; font-style: italic; }
+        .gold-drop { color: var(--gold); font-family: 'Cinzel', serif; font-size: 3rem; float: left; margin-right: 12px; line-height: 1; }
+    </style>
+</head>
+<body>
+
+    <div class="lamp-glow"></div>
+
+    <button onclick="window.location.href='index.html'" class="fixed top-10 left-10 text-[#D4AF37] opacity-40 hover:opacity-100 uppercase text-[10px] tracking-[0.4em] z-[100] cursor-pointer">
+        ← BACK
+    </button>
+
+    <div class="container">
+        <div class="text-center mb-10">
+            <h1 class="text-2xl uppercase tracking-[0.5em] text-[#D4AF37]">The Origin</h1>
+        </div>
+
+        <div class="manifesto">
+            <div class="story-text">
+                <span class="gold-drop">I</span> built this sanctuary because the world grew too loud, and the digital space too shallow—where the weight of the ancient is traded for a flicker that is hollow. We have bartered the silence of the library for the clamor of the crowd, leaving the dignity of the written word buried in a shroud.
+                <br><br>
+                My motive was simple, my purpose was clear: to reclaim the whispers that the modern age cannot hear. I believe that true luxury should not be a gate kept by gold, but a sanctuary for the spirit, where the truth can unfold. I made this library free because wisdom is a breath, a birthright of the living that outlasts even death. 
+                <br><br>
+                This is my action, my gift, and my light—a stand for the depth that stays hidden in the night. For those who still seek what the ancients once knew: the Veridian Archive was built, in silence, for you.
+            </div>
+            
+            <div class="mt-10 text-center">
+                <p class="text-[10px] tracking-[0.4em] text-[#D4AF37] uppercase opacity-60">Architect of the Sanctum</p>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
