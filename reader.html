@@ -133,9 +133,10 @@
             updateMediaSession();
         }
 
-        // --- BACKGROUND POWER: HEARTBEAT & MEDIA SESSION ---
+        // --- ENHANCED SILENT HEARTBEAT ---
         function startHeartbeat() {
             if (!audioCtx) return;
+            // Constant silent pulse to keep the OS from suspending the tab
             const silence = audioCtx.createBuffer(1, 44100, 44100);
             heartbeat = audioCtx.createBufferSource();
             heartbeat.buffer = silence;
@@ -145,7 +146,10 @@
         }
 
         function stopHeartbeat() {
-            if (heartbeat) { heartbeat.stop(); heartbeat = null; }
+            if (heartbeat) { 
+                try { heartbeat.stop(); } catch(e) {}
+                heartbeat = null; 
+            }
         }
 
         function updateMediaSession() {
@@ -165,6 +169,7 @@
 
         async function startSanctum() {
             await loadBookData();
+            // Initialize AudioContext on first user tap
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             audioCtx.resume();
             document.getElementById('unlock-screen').style.opacity = '0';
@@ -238,7 +243,7 @@
             } 
             else { 
                 document.getElementById('play-btn').innerText = "‖"; 
-                startHeartbeat();
+                startHeartbeat(); // Keeps CPU awake for TTS engine
                 speak(); 
                 if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "playing";
             }
