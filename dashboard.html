@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veridian | Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #D4AF37; --bg: #0F0A05; --card: #1A140E; --text: #D4AF37; }
+        body.light-mode { --bg: #F3F0E6; --card: #E2DFD2; --text: #1F150D; }
+        body { font-family: 'Fauna One', serif; background-color: var(--bg); color: var(--text); transition: 0.5s; margin: 0; }
+        .lux-serif { font-family: 'Cinzel', serif; letter-spacing: 0.2em; }
+        .menu-item {
+            background: var(--card); border: 1px solid rgba(212, 175, 55, 0.2);
+            padding: 25px; border-radius: 8px; margin-bottom: 15px;
+            cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: space-between;
+        }
+        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; inset: 0; background-color: #333; transition: .4s; border-radius: 34px; border: 1px solid var(--gold); }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 3px; background-color: var(--gold); transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--gold); }
+        input:checked + .slider:before { transform: translateX(26px); background-color: var(--bg); }
+    </style>
+</head>
+<body class="p-8">
+    <header class="mb-10">
+        <button onclick="window.location.href='index.html'" class="text-[10px] uppercase opacity-50">← Return</button>
+        <h1 class="lux-serif text-2xl mt-4">ARCHIVE MODES</h1>
+    </header>
+
+    <div class="menu-item">
+        <div><h2 class="lux-serif text-sm">HISTORY</h2><p class="text-[10px] opacity-60">Your recent journeys</p></div>
+        <span>📜</span>
+    </div>
+
+    <div class="menu-item">
+        <div><h2 class="lux-serif text-sm">STARRED</h2><p class="text-[10px] opacity-60">Sacred favorites</p></div>
+        <span>⭐</span>
+    </div>
+
+    <div class="menu-item">
+        <div><h2 class="lux-serif text-sm">BOOKS & DOCS</h2><p class="text-[10px] opacity-60">Categorized wisdom</p></div>
+        <span>📚</span>
+    </div>
+
+    <div class="menu-item">
+        <div><h2 class="lux-serif text-sm">THEME</h2><p id="mode-label" class="text-[10px] opacity-60">Dark Mode</p></div>
+        <label class="switch">
+            <input type="checkbox" id="theme-toggle" onchange="toggleTheme()">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            document.getElementById('mode-label').innerText = isLight ? "Light Mode" : "Dark Mode";
+            localStorage.setItem('veridian-theme', isLight ? 'light' : 'dark');
+        }
+        window.onload = () => {
+            if(localStorage.getItem('veridian-theme') === 'light') {
+                document.body.classList.add('light-mode');
+                document.getElementById('theme-toggle').checked = true;
+                document.getElementById('mode-label').innerText = "Light Mode";
+            }
+        };
+    </script>
+</body>
+</html>
