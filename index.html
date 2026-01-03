@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Veridian Archive | Oaky Sanctuary</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap" rel="stylesheet">
     <style>
         :root { 
@@ -106,7 +107,7 @@
             <div class="book-artifact" onclick="location.href='reader.html?id=3'">
                 <span class="lux-serif text-[#1A1108] text-[11px] font-extrabold uppercase leading-loose">Volume III<br>Ancient Silence</span>
             </div>
-            </div>
+        </div>
 
         <div class="hub-container">
             <div id="bloom" class="menu-bloom">
@@ -128,7 +129,7 @@
                 const gallery = document.getElementById('main-gallery');
                 gallery.classList.remove('hidden');
                 setTimeout(() => gallery.classList.add('opacity-100'), 50);
-                loadUploadedBooks(); // Load books once gallery is visible
+                loadUploadedBooks(); 
             }, 1000);
         }
 
@@ -144,24 +145,30 @@
             window.location.href = 'origin.html';
         }
 
-        // --- DYNAMIC BOOK LOADING ENGINE ---
-        function loadUploadedBooks() {
+        // --- DEEP VAULT LOADING ENGINE ---
+        async function loadUploadedBooks() {
             const shelf = document.getElementById('shelf');
-            const library = JSON.parse(localStorage.getItem('veridian_library')) || [];
+            
+            try {
+                // Fetch library from Deep Storage (IndexedDB)
+                const library = await localforage.getItem('veridian_library') || [];
 
-            library.forEach(book => {
-                const bookDiv = document.createElement('div');
-                bookDiv.className = 'book-artifact';
-                // Pass the unique ID to the reader
-                bookDiv.onclick = () => window.location.href = `reader.html?id=${book.id}`;
-                
-                bookDiv.innerHTML = `
-                    <span class="lux-serif text-[#1A1108] text-[11px] font-extrabold uppercase leading-loose">
-                        ${book.title}<br>${book.author || 'Unknown'}
-                    </span>
-                `;
-                shelf.appendChild(bookDiv);
-            });
+                library.forEach(book => {
+                    const bookDiv = document.createElement('div');
+                    bookDiv.className = 'book-artifact';
+                    // Pass the unique ID to the reader
+                    bookDiv.onclick = () => window.location.href = `reader.html?id=${book.id}`;
+                    
+                    bookDiv.innerHTML = `
+                        <span class="lux-serif text-[#1A1108] text-[11px] font-extrabold uppercase leading-loose">
+                            ${book.title}<br>${book.author || 'Anonymous'}
+                        </span>
+                    `;
+                    shelf.appendChild(bookDiv);
+                });
+            } catch (err) {
+                console.error("Deep Vault access failed:", err);
+            }
         }
     </script>
 </body>
