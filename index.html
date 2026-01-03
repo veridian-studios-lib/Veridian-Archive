@@ -103,7 +103,7 @@
         <div class="hub-container">
             <div id="bloom" class="menu-bloom">
                 <button class="sub-btn" onclick="window.location.href='upload.html'">UPLOAD</button>
-                <button class="sub-btn">SOCIALS</button>
+                <button class="sub-btn" onclick="window.location.href='dashboard.html'">MODE</button>
                 <button class="sub-btn" onclick="goToOrigin(event)">ORIGIN</button>
             </div>
             <div class="hub-btn" onclick="toggleMenu()">
@@ -113,7 +113,6 @@
     </div>
 
     <script>
-        // Pre-defined Ancient Volumes
         const staticBooks = [
             { id: "1", title: "Volume I", author: "The Foundation" },
             { id: "2", title: "Volume II", author: "Nature's Echo" },
@@ -127,7 +126,7 @@
                 const gallery = document.getElementById('main-gallery');
                 gallery.classList.remove('hidden');
                 setTimeout(() => gallery.classList.add('opacity-100'), 50);
-                searchWisdom(); // Initial load of all books
+                searchWisdom(); 
             }, 1000);
         }
 
@@ -143,32 +142,23 @@
             window.location.href = 'origin.html';
         }
 
-        // --- SEARCH & MANIFESTATION ENGINE ---
         async function searchWisdom() {
             const shelf = document.getElementById('shelf');
             const query = document.getElementById('archive-search').value.toLowerCase();
-            
-            shelf.innerHTML = ''; // Clear the shelf for new manifestation
+            shelf.innerHTML = ''; 
 
             try {
-                // 1. Fetch Sacrificed Books
                 const library = await localforage.getItem('veridian_library') || [];
-                
-                // 2. Combine with Static Volumes
                 const allBooks = [...staticBooks, ...library];
-
-                // 3. Filter based on Search Query
                 const filtered = allBooks.filter(book => 
                     book.title.toLowerCase().includes(query) || 
                     book.author.toLowerCase().includes(query)
                 );
 
-                // 4. Manifest the Artifacts
                 filtered.forEach(book => {
                     const bookDiv = document.createElement('div');
                     bookDiv.className = 'book-artifact';
                     bookDiv.onclick = () => window.location.href = `reader.html?id=${book.id}`;
-                    
                     bookDiv.innerHTML = `
                         <span class="lux-serif text-[#1A1108] text-[11px] font-extrabold uppercase leading-loose">
                             ${book.title}<br>${book.author || 'Anonymous'}
