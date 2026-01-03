@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --oaky-tint: #2D1B0E; /* Refined oak tone, not too heavy */
+            --oaky-tint: #2D1B0E; 
             --gold: #D4AF37; 
             --forest: #2D4236; 
             --paper: #F3F0E6; 
@@ -22,22 +22,20 @@
         }
         .lux-serif { font-family: 'Cinzel', serif; letter-spacing: 0.3em; }
 
-        /* The Oaky Background - Subtle Texture */
         .oaky-theme { 
             background: radial-gradient(circle at center, #3d2613 0%, #0f0a05 100%);
             min-height: 100vh;
         }
 
-        /* Horizontal Scrolling Shelf */
         .shelf-horizontal {
             display: flex;
             gap: 60px;
             overflow-x: auto;
             padding: 40px 100px 100px 100px;
             scroll-snap-type: x mandatory;
-            scrollbar-width: none; /* Firefox */
+            scrollbar-width: none;
         }
-        .shelf-horizontal::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+        .shelf-horizontal::-webkit-scrollbar { display: none; }
 
         .book-artifact {
             scroll-snap-align: center;
@@ -60,23 +58,30 @@
             box-shadow: 0 40px 80px rgba(212, 175, 55, 0.15);
         }
 
-        /* The Bloom Hub (Bottom Left) */
+        /* Fixed Bloom Hub Logic */
+        .hub-container {
+            position: fixed; bottom: 40px; left: 40px; z-index: 100;
+            display: flex; flex-direction: column; align-items: center; gap: 20px;
+        }
         .hub-btn { 
             width: 75px; height: 75px; background: var(--gold); color: #0F0A05; 
             border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-            font-size: 2.5rem; position: fixed; bottom: 40px; left: 40px; z-index: 100; 
-            box-shadow: 0 15px 40px rgba(0,0,0,0.8); 
+            font-size: 2.5rem; box-shadow: 0 15px 40px rgba(0,0,0,0.8); cursor: pointer;
+            transition: transform 0.5s;
         }
         .menu-bloom { 
-            position: absolute; bottom: 95px; left: 0; display: flex; flex-direction: column; 
-            gap: 20px; transition: 0.5s; opacity: 0; pointer-events: none; transform: translateY(20px); 
+            display: flex; flex-direction: column; gap: 15px; 
+            transition: 0.5s; opacity: 0; pointer-events: none; transform: translateY(20px); 
         }
         .menu-bloom.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        
         .sub-btn { 
-            width: 60px; height: 60px; border-radius: 50%; background: var(--forest); 
+            width: 65px; height: 65px; border-radius: 50%; background: var(--forest); 
             color: var(--gold); display: flex; align-items: center; justify-content: center; 
-            font-size: 0.65rem; font-weight: bold; box-shadow: 0 10px 20px rgba(0,0,0,0.6); 
+            font-size: 0.65rem; font-weight: bold; box-shadow: 0 10px 20px rgba(0,0,0,0.6);
+            border: 1px solid rgba(212,175,55,0.2); cursor: pointer; transition: 0.3s;
         }
+        .sub-btn:hover { background: var(--gold); color: #0F0A05; transform: scale(1.1); }
     </style>
 </head>
 <body>
@@ -102,17 +107,16 @@
             <div class="book-artifact" onclick="location.href='reader.html?id=3'">
                 <span class="lux-serif text-[#1A1108] text-[11px] font-extrabold uppercase leading-loose">Volume III<br>Ancient Silence</span>
             </div>
-            <div class="book-artifact" onclick="location.href='reader.html?id=4'">
-                <span class="lux-serif text-[#1A1108] text-[11px] font-extrabold uppercase leading-loose">Volume IV<br>The Golden Path</span>
-            </div>
         </div>
 
-        <div class="hub-btn" onclick="toggleMenu()">
-            <span id="plus">+</span>
+        <div class="hub-container">
             <div id="bloom" class="menu-bloom">
                 <button class="sub-btn">UPLOAD</button>
                 <button class="sub-btn">SOCIALS</button>
-                <button class="sub-btn">ORIGIN</button>
+                <button class="sub-btn" onclick="goToOrigin(event)">ORIGIN</button>
+            </div>
+            <div class="hub-btn" onclick="toggleMenu()">
+                <span id="plus" style="transition: 0.5s;">+</span>
             </div>
         </div>
     </div>
@@ -125,13 +129,20 @@
                 const gallery = document.getElementById('main-gallery');
                 gallery.classList.remove('hidden');
                 setTimeout(() => gallery.classList.add('opacity-100'), 50);
-            }, 1500);
+            }, 1000);
         }
+
         function toggleMenu() {
             const bloom = document.getElementById('bloom');
             const plus = document.getElementById('plus');
             bloom.classList.toggle('active');
             plus.style.transform = bloom.classList.contains('active') ? "rotate(45deg)" : "rotate(0deg)";
+        }
+
+        function goToOrigin(event) {
+            // This prevents the menu from closing and forces the page jump
+            event.stopPropagation();
+            window.location.href = 'origin.html';
         }
     </script>
 </body>
