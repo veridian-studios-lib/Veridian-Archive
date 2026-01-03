@@ -22,34 +22,68 @@
 
         .container {
             max-width: 650px; width: 90%; z-index: 10; padding: 40px 0;
-            animation: fadeIn 1.5s ease-out; /* Faster fade-in */
+            animation: fadeIn 1.5s ease-out;
         }
 
         .manifesto {
             background: rgba(20, 15, 10, 0.8);
             border: 1px solid rgba(212, 175, 55, 0.2);
-            padding: 40px; border-radius: 4px;
+            padding: 50px; border-radius: 4px;
             box-shadow: 0 30px 60px rgba(0,0,0,0.8);
             backdrop-filter: blur(10px);
+            position: relative;
         }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .story-text { line-height: 2.2; text-align: justify; font-size: 1.1rem; font-style: italic; }
+        /* The Golden Glow Animation for your name */
+        @keyframes goldPulse {
+            0%, 100% { text-shadow: 0 0 10px rgba(212, 175, 55, 0.3); }
+            50% { text-shadow: 0 0 25px rgba(212, 175, 55, 0.7), 0 0 5px rgba(255, 255, 255, 0.5); }
+        }
+
+        .story-text { line-height: 2.2; text-align: justify; font-size: 1.1rem; font-style: italic; color: rgba(243, 240, 230, 0.85); }
         .gold-drop { color: var(--gold); font-family: 'Cinzel', serif; font-size: 3rem; float: left; margin-right: 12px; line-height: 1; }
+
+        .signature-area {
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(212, 175, 55, 0.15);
+            text-align: center;
+        }
+
+        .architect-name {
+            font-family: 'Cinzel', serif;
+            color: var(--gold);
+            letter-spacing: 0.6em;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            animation: goldPulse 4s infinite ease-in-out;
+            display: inline-block;
+        }
+
+        .architect-title {
+            display: block;
+            font-size: 9px;
+            letter-spacing: 0.8em;
+            text-transform: uppercase;
+            opacity: 0.4;
+            margin-top: 10px;
+            color: var(--gold);
+        }
     </style>
 </head>
 <body>
 
     <div class="lamp-glow"></div>
 
-    <button onclick="window.location.href='index.html'" class="fixed top-10 left-10 text-[#D4AF37] opacity-40 hover:opacity-100 uppercase text-[10px] tracking-[0.4em] z-[100] cursor-pointer">
+    <button onclick="window.location.href='index.html'" class="fixed top-10 left-10 text-[#D4AF37] opacity-40 hover:opacity-100 uppercase text-[10px] tracking-[0.4em] z-[100] cursor-pointer transition-all">
         ← BACK
     </button>
 
     <div class="container">
-        <div class="text-center mb-10">
-            <h1 class="text-2xl uppercase tracking-[0.5em] text-[#D4AF37]">The Origin</h1>
+        <div class="text-center mb-12">
+            <h1 class="text-2xl uppercase tracking-[0.6em] text-[#D4AF37]" style="text-shadow: 0 0 15px rgba(212, 175, 55, 0.4);">The Origin</h1>
         </div>
 
         <div class="manifesto">
@@ -61,8 +95,9 @@
                 This is my action, my gift, and my light—a stand for the depth that stays hidden in the night. For those who still seek what the ancients once knew: the Veridian Archive was built, in silence, for you.
             </div>
             
-            <div class="mt-10 text-center">
-                <p class="text-[10px] tracking-[0.4em] text-[#D4AF37] uppercase opacity-60">Architect of the Sanctum</p>
+            <div class="signature-area">
+                <span class="architect-name">Ahsan Shahzad</span>
+                <span class="architect-title">Sole Architect of the Sanctum</span>
             </div>
         </div>
     </div>
