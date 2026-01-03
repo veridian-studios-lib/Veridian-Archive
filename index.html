@@ -94,20 +94,11 @@
     <div id="main-gallery" class="hidden opacity-0 transition-opacity duration-1000 oaky-theme h-screen flex flex-col">
         <header class="text-center pt-24 pb-8">
             <h1 class="lux-serif text-4xl md:text-6xl text-white mb-6">VERIDIAN ARCHIVE</h1>
-            <input type="text" placeholder="Search Wisdom..." class="bg-transparent border-b border-[#D4AF37]/20 py-3 w-72 text-center focus:outline-none text-[#D4AF37] italic text-xl">
+            <input type="text" id="archive-search" oninput="searchWisdom()" placeholder="Search Wisdom..." class="bg-transparent border-b border-[#D4AF37]/20 py-3 w-72 text-center focus:outline-none text-[#D4AF37] italic text-xl">
         </header>
 
         <div id="shelf" class="shelf-horizontal flex-1 flex items-center">
-            <div class="book-artifact" onclick="location.href='reader.html?id=1'">
-                <span class="lux-serif text-[#1A1108] text-[11px] font-extrabold uppercase leading-loose">Volume I<br>The Foundation</span>
             </div>
-            <div class="book-artifact" onclick="location.href='reader.html?id=2'">
-                <span class="lux-serif text-[#1A1108] text-[11px] font-extrabold uppercase leading-loose">Volume II<br>Nature's Echo</span>
-            </div>
-            <div class="book-artifact" onclick="location.href='reader.html?id=3'">
-                <span class="lux-serif text-[#1A1108] text-[11px] font-extrabold uppercase leading-loose">Volume III<br>Ancient Silence</span>
-            </div>
-        </div>
 
         <div class="hub-container">
             <div id="bloom" class="menu-bloom">
@@ -122,6 +113,13 @@
     </div>
 
     <script>
+        // Pre-defined Ancient Volumes
+        const staticBooks = [
+            { id: "1", title: "Volume I", author: "The Foundation" },
+            { id: "2", title: "Volume II", author: "Nature's Echo" },
+            { id: "3", title: "Volume III", author: "Ancient Silence" }
+        ];
+
         function enterArchive() {
             document.getElementById('quote-screen').style.opacity = '0';
             setTimeout(() => {
@@ -129,7 +127,7 @@
                 const gallery = document.getElementById('main-gallery');
                 gallery.classList.remove('hidden');
                 setTimeout(() => gallery.classList.add('opacity-100'), 50);
-                loadUploadedBooks(); 
+                searchWisdom(); // Initial load of all books
             }, 1000);
         }
 
@@ -145,18 +143,30 @@
             window.location.href = 'origin.html';
         }
 
-        // --- DEEP VAULT LOADING ENGINE ---
-        async function loadUploadedBooks() {
+        // --- SEARCH & MANIFESTATION ENGINE ---
+        async function searchWisdom() {
             const shelf = document.getElementById('shelf');
+            const query = document.getElementById('archive-search').value.toLowerCase();
             
-            try {
-                // Fetch library from Deep Storage (IndexedDB)
-                const library = await localforage.getItem('veridian_library') || [];
+            shelf.innerHTML = ''; // Clear the shelf for new manifestation
 
-                library.forEach(book => {
+            try {
+                // 1. Fetch Sacrificed Books
+                const library = await localforage.getItem('veridian_library') || [];
+                
+                // 2. Combine with Static Volumes
+                const allBooks = [...staticBooks, ...library];
+
+                // 3. Filter based on Search Query
+                const filtered = allBooks.filter(book => 
+                    book.title.toLowerCase().includes(query) || 
+                    book.author.toLowerCase().includes(query)
+                );
+
+                // 4. Manifest the Artifacts
+                filtered.forEach(book => {
                     const bookDiv = document.createElement('div');
                     bookDiv.className = 'book-artifact';
-                    // Pass the unique ID to the reader
                     bookDiv.onclick = () => window.location.href = `reader.html?id=${book.id}`;
                     
                     bookDiv.innerHTML = `
@@ -167,7 +177,7 @@
                     shelf.appendChild(bookDiv);
                 });
             } catch (err) {
-                console.error("Deep Vault access failed:", err);
+                console.error("The Vault is sealed:", err);
             }
         }
     </script>
