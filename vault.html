@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veridian | The Vault Archive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #D4AF37; --bg: #0F0A05; --card: #1A140E; }
+        body { 
+            font-family: 'Fauna One', serif; background-color: #0F0A05; color: #D4AF37; 
+            margin: 0; min-height: 100vh; padding: 20px;
+        }
+        .lux-serif { font-family: 'Cinzel', serif; letter-spacing: 0.2em; }
+        
+        .category-section { margin-bottom: 40px; }
+        .category-title { 
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2); 
+            padding-bottom: 10px; margin-bottom: 20px;
+            font-size: 0.75rem; opacity: 0.6;
+        }
+
+        .scroll-item {
+            background: #1A140E; border: 1px solid rgba(212, 175, 55, 0.1);
+            padding: 20px; border-radius: 8px; margin-bottom: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            transition: 0.3s;
+        }
+        .scroll-item:hover { border-color: #D4AF37; }
+        
+        .delete-btn {
+            color: #ff4444; font-size: 0.7rem; letter-spacing: 0.1em;
+            cursor: pointer; opacity: 0.5; transition: 0.3s;
+            padding: 10px; border: 1px solid rgba(255, 68, 68, 0.2); border-radius: 4px;
+        }
+        .delete-btn:hover { opacity: 1; background: rgba(255, 68, 68, 0.1); border-color: #ff4444; }
+        
+        .empty-msg { opacity: 0.3; font-style: italic; font-size: 0.8rem; padding: 10px; }
+    </style>
+</head>
+<body class="max-w-2xl mx-auto">
+
+    <header class="py-10 flex justify-between items-center">
+        <div>
+            <button onclick="window.location.href='dashboard.html'" class="text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-all">← Back to Dashboard</button>
+            <h1 class="lux-serif text-2xl mt-2">THE VAULT ARCHIVE</h1>
+        </div>
+        <div class="text-4xl opacity-10">📜</div>
+    </header>
+
+    <div id="vault-content">
+        </div>
+
+    <script>
+        const categories = ["Philosophy", "History", "Science", "Documents", "Other"];
+
+        async function manifestVault() {
+            const vaultContent = document.getElementById('vault-content');
+            const library = await localforage.getItem('veridian_library') || [];
+            
+            vaultContent.innerHTML = ''; 
+
+            categories.forEach(cat => {
+                const filteredBooks = library.filter(book => book.category === cat);
+                const section = document.createElement('div');
+                section.className = 'category-section';
+                
+                section.innerHTML = `
+                    <h2 class="category-title lux-serif uppercase">${cat}</h2>
+                    <div id="list-${cat}"></div>
+                `;
+                
+                vaultContent.appendChild(section);
+                const listContainer = document.getElementById(`list-${cat}`);
+
+                if (filteredBooks.length === 0) {
+                    listContainer.innerHTML = `<p class="empty-msg">No scrolls sacrificed to this section yet...</p>`;
+                } else {
+                    filteredBooks.forEach(book => {
+                        const item = document.createElement('div');
+                        item.className = 'scroll-item';
+                        item.innerHTML = `
+                            <div onclick="window.location.href='reader.html?id=${book.id}'" class="flex-1 cursor-pointer">
+                                <h3 class="text-sm font-bold uppercase">${book.title}</h3>
+                                <p class="text-[10px] opacity-60">${book.author}</p>
+                            </div>
+                            <button class="delete-btn lux-serif" onclick="obliterateScroll('${book.id}')">DELETE</button>
+                        `;
+                        listContainer.appendChild(item);
+                    });
+                }
+            });
+        }
+
+        async function obliterateScroll(bookId) {
+            if (confirm("Are you sure you wish to erase this scroll from the archive forever?")) {
+                let library = await localforage.getItem('veridian_library') || [];
+                // Filter out the book to be deleted
+                library = library.filter(book => book.id !== bookId);
+                
+                // Save the updated library back to storage
+                await localforage.setItem('veridian_library', library);
+                
+                // Refresh the vault view
+                manifestVault();
+            }
+        }
+
+        window.onload = manifestVault;
+    </script>
+</body>
+</html>
