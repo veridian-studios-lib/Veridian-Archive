@@ -29,12 +29,23 @@
         }
 
         .timestamp { font-size: 9px; opacity: 0.4; text-transform: uppercase; letter-spacing: 1px; }
+
+        .clear-btn {
+            font-size: 9px; letter-spacing: 0.1em;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            padding: 4px 10px; border-radius: 4px;
+            transition: 0.3s;
+        }
+        .clear-btn:hover { background: rgba(212, 175, 55, 0.1); border-color: var(--gold); }
     </style>
 </head>
 <body class="max-w-2xl mx-auto">
 
     <header class="py-10">
-        <button onclick="window.location.href='dashboard.html'" class="text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-all cursor-pointer">← Back to Dashboard</button>
+        <div class="flex justify-between items-start">
+            <button onclick="window.location.href='dashboard.html'" class="text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-all cursor-pointer">← Back to Dashboard</button>
+            <button onclick="clearHistory()" id="clear-button" class="clear-btn uppercase opacity-40 hover:opacity-100">Clear Chronicles</button>
+        </div>
         <h1 class="lux-serif text-3xl mt-4">THE CHRONICLES</h1>
         <p class="text-[10px] opacity-50 mt-1 uppercase tracking-tighter">Your recent journeys through the archive</p>
     </header>
@@ -45,19 +56,20 @@
     <script>
         async function manifestHistory() {
             const container = document.getElementById('history-content');
+            const clearBtn = document.getElementById('clear-button');
             const library = await localforage.getItem('veridian_library') || [];
             
-            // Filter only books that have been opened (have a lastRead timestamp)
-            // Then sort by most recent first
             const history = library
                 .filter(book => book.lastRead)
                 .sort((a, b) => b.lastRead - a.lastRead);
 
             if (history.length === 0) {
                 container.innerHTML = `<p class="opacity-30 italic text-center mt-20">No journeys have been recorded in the chronicles yet.</p>`;
+                clearBtn.style.display = 'none';
                 return;
             }
 
+            clearBtn.style.display = 'block';
             container.innerHTML = '';
             history.forEach(book => {
                 const date = new Date(book.lastRead).toLocaleString('en-US', { 
@@ -74,6 +86,23 @@
                 `;
                 container.appendChild(item);
             });
+        }
+
+        async function clearHistory() {
+            if (confirm("Are you sure you wish to wipe the chronicles of your journeys? This cannot be undone.")) {
+                try {
+                    let library = await localforage.getItem('veridian_library') || [];
+                    // Remove the lastRead property from all books
+                    const updatedLibrary = library.map(book => {
+                        const { lastRead, ...rest } = book;
+                        return rest;
+                    });
+                    await localforage.setItem('veridian_library', updatedLibrary);
+                    manifestHistory(); // Refresh display
+                } catch (e) {
+                    console.error("Failed to clear history", e);
+                }
+            }
         }
 
         window.onload = manifestHistory;
