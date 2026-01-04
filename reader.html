@@ -69,7 +69,6 @@
         
         .back-btn { position: fixed; top: 25px; left: 25px; z-index: 100; color: var(--gold); font-size: 10px; letter-spacing: 0.3em; opacity: 0.4; }
         
-        /* STAR ICON STYLE */
         .star-toggle { 
             position: fixed; top: 20px; right: 25px; z-index: 100; 
             font-size: 1.5rem; cursor: pointer; transition: 0.4s; 
@@ -143,7 +142,9 @@
                             return pageArray[0].match(/[^.!?]+[.!?]+/g) || [pageArray[0]];
                         });
                         
-                        // Set visual state of star
+                        // NEW: Update history timestamp when book is opened
+                        updateHistory(bookId);
+
                         if(currentMetadata.starred) document.getElementById('star-btn').classList.add('active');
                     }
                 } catch (e) { console.error("Vault Error", e); }
@@ -151,17 +152,25 @@
             updateMediaSession();
         }
 
+        // --- NEW HISTORY FUNCTION ---
+        async function updateHistory(bookId) {
+            try {
+                let library = await localforage.getItem('veridian_library') || [];
+                const index = library.findIndex(b => b.id === bookId);
+                if (index !== -1) {
+                    library[index].lastRead = Date.now(); // Store current time
+                    await localforage.setItem('veridian_library', library);
+                }
+            } catch (e) { console.error("History Log Failed", e); }
+        }
+
         async function toggleStar() {
             if (!currentMetadata.id) return;
-            
             const btn = document.getElementById('star-btn');
             currentMetadata.starred = !currentMetadata.starred;
-            
-            // UI Update
             if(currentMetadata.starred) btn.classList.add('active');
             else btn.classList.remove('active');
 
-            // Save to LocalForage
             try {
                 let library = await localforage.getItem('veridian_library') || [];
                 const index = library.findIndex(b => b.id === currentMetadata.id);
