@@ -34,7 +34,6 @@
             z-index: 10;
         }
 
-        /* The Sacrifice Zone */
         .drop-zone {
             border: 1px dashed rgba(212, 175, 55, 0.3);
             padding: 30px; text-align: center; margin-bottom: 25px;
@@ -42,14 +41,21 @@
         }
         .drop-zone:hover { border-color: var(--gold); background: rgba(212, 175, 55, 0.05); }
 
-        input, textarea {
+        input, textarea, select {
             background: rgba(255, 255, 255, 0.03);
             border: none; border-bottom: 1px solid rgba(212, 175, 55, 0.1);
             width: 100%; color: var(--paper); padding: 15px; margin-bottom: 20px;
             outline: none; transition: 0.4s; font-family: 'Fauna One', serif;
+            appearance: none; /* Removes default browser styling */
         }
 
-        input:focus, textarea:focus { border-bottom-color: var(--gold); background: rgba(212, 175, 55, 0.05); }
+        /* Style for the dropdown options */
+        select option {
+            background: #1A140E;
+            color: var(--gold);
+        }
+
+        input:focus, textarea:focus, select:focus { border-bottom-color: var(--gold); background: rgba(212, 175, 55, 0.05); }
 
         .lux-btn {
             width: 100%; padding: 18px; border: 1px solid var(--gold);
@@ -80,19 +86,27 @@
 
         <input type="text" id="bookTitle" placeholder="Title of the Work">
         <input type="text" id="bookAuthor" placeholder="Author/Ahsan Shahzad">
+        
+        <select id="bookCategory">
+            <option value="" disabled selected>Select Category</option>
+            <option value="Philosophy">Philosophy</option>
+            <option value="History">History</option>
+            <option value="Science">Science</option>
+            <option value="Documents">Documents</option>
+            <option value="Other">Other Wisdom</option>
+        </select>
+
         <textarea id="bookContent" rows="5" placeholder="Or paste manually... Use double spaces for new pages."></textarea>
         
         <button class="lux-btn" id="commit-btn" onclick="saveToArchive()">Commit to Archive</button>
     </div>
 
     <script>
-        // Setup PDF Worker
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
         const fileInput = document.getElementById('file-input');
         const status = document.getElementById('status');
 
-        // PDF Extraction Logic
         fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -107,7 +121,6 @@
                     const pdf = await pdfjsLib.getDocument(typedarray).promise;
                     let fullText = "";
 
-                    // Extract text from ALL pages (Deep Vault allows this)
                     for (let i = 1; i <= pdf.numPages; i++) {
                         const page = await pdf.getPage(i);
                         const content = await page.getTextContent();
@@ -125,14 +138,14 @@
             reader.readAsArrayBuffer(file);
         });
 
-        // Deep Vault Saving Logic
         async function saveToArchive() {
             const title = document.getElementById('bookTitle').value;
             const author = document.getElementById('bookAuthor').value || "ANONYMOUS";
+            const category = document.getElementById('bookCategory').value;
             const text = document.getElementById('bookContent').value;
 
-            if(!title || !text) {
-                alert("The Archive requires a Title and Content.");
+            if(!title || !text || !category) {
+                alert("The Archive requires a Title, Category, and Content.");
                 return;
             }
 
@@ -140,15 +153,13 @@
                 id: "vault-" + Date.now(),
                 title: title.toUpperCase(),
                 author: author.toUpperCase(),
+                category: category,
                 content: text.split('\n\n').filter(p => p.trim() !== "").map(p => [p])
             };
 
             try {
-                // Fetch existing library from IndexedDB
                 let library = await localforage.getItem('veridian_library') || [];
                 library.push(newBook);
-                
-                // Save back to IndexedDB (No 5MB limit!)
                 await localforage.setItem('veridian_library', library);
 
                 const btn = document.getElementById('commit-btn');
