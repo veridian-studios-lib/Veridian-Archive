@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veridian | Future Goals</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #D4AF37; --bg: #050505; --card: #120D08; }
+        body { 
+            font-family: 'Fauna One', serif; background-color: var(--bg); color: var(--gold); 
+            margin: 0; min-height: 100vh; padding: 20px;
+        }
+        .lux-serif { font-family: 'Cinzel', serif; letter-spacing: 0.15em; }
+        
+        .goal-card {
+            background: var(--card); border: 1px solid rgba(212, 175, 55, 0.15);
+            padding: 20px; border-radius: 12px; margin-bottom: 20px;
+        }
+        
+        input, select {
+            background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.2);
+            color: var(--gold); padding: 8px; border-radius: 4px; width: 100%; outline: none;
+        }
+        
+        .ritual-circle {
+            width: 80px; height: 80px; border: 2px solid var(--gold);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 15px; box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+        }
+
+        .action-btn {
+            border: 1px solid var(--gold); padding: 10px 20px; border-radius: 4px;
+            font-size: 10px; letter-spacing: 2px; transition: 0.3s;
+        }
+        .action-btn:hover { background: var(--gold); color: black; }
+    </style>
+</head>
+<body class="max-w-xl mx-auto">
+
+    <header class="py-10 text-center">
+        <button onclick="window.location.href='dashboard.html'" class="text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-all mb-4">← Back to Dashboard</button>
+        <h1 class="lux-serif text-2xl">THE MANIFEST</h1>
+        <p class="text-[10px] opacity-50 uppercase mt-1">Intentions for the Archive</p>
+    </header>
+
+    <section class="goal-card text-center">
+        <h2 class="lux-serif text-xs mb-6 opacity-80">DAILY RITUAL</h2>
+        <div class="ritual-circle">
+            <span id="display-ritual" class="text-xl font-bold">20</span>
+        </div>
+        <p class="text-[10px] mb-4 opacity-60">MINUTES OF DEEP READING</p>
+        <input type="range" id="ritual-range" min="5" max="120" step="5" value="20" oninput="updateRitualDisplay(this.value)" onchange="saveRitual(this.value)">
+    </section>
+
+    <section class="goal-card">
+        <h2 class="lux-serif text-xs mb-4 opacity-80 uppercase">Future Intentions</h2>
+        <div class="flex gap-2 mb-6">
+            <input type="text" id="future-title" placeholder="Scroll title to find..." class="text-xs">
+            <button onclick="addIntention()" class="action-btn">ADD</button>
+        </div>
+        <ul id="intentions-list" class="space-y-4">
+            </ul>
+    </section>
+
+    <script>
+        // --- Ritual Logic ---
+        function updateRitualDisplay(val) {
+            document.getElementById('display-ritual').innerText = val;
+        }
+
+        async function saveRitual(val) {
+            await localforage.setItem('veridian_ritual_goal', val);
+        }
+
+        // --- Intentions Logic ---
+        async function addIntention() {
+            const input = document.getElementById('future-title');
+            if (!input.value) return;
+
+            let intentions = await localforage.getItem('veridian_intentions') || [];
+            intentions.push({ id: Date.now(), title: input.value, status: 'pending' });
+            await localforage.setItem('veridian_intentions', intentions);
+            
+            input.value = '';
+            loadIntentions();
+        }
+
+        async function loadIntentions() {
+            const list = document.getElementById('intentions-list');
+            const intentions = await localforage.getItem('veridian_intentions') || [];
+            
+            list.innerHTML = intentions.map(item => `
+                <li class="flex justify-between items-center border-b border-gold/10 pb-2">
+                    <span class="text-xs uppercase tracking-wide">${item.title}</span>
+                    <button onclick="removeIntention(${item.id})" class="text-[10px] opacity-40 hover:text-red-500">REMOVE</button>
+                </li>
+            `).join('');
+        }
+
+        async function removeIntention(id) {
+            let intentions = await localforage.getItem('veridian_intentions') || [];
+            intentions = intentions.filter(i => i.id !== id);
+            await localforage.setItem('veridian_intentions', intentions);
+            loadIntentions();
+        }
+
+        // Initial Load
+        window.onload = async () => {
+            const goal = await localforage.getItem('veridian_ritual_goal') || 20;
+            document.getElementById('ritual-range').value = goal;
+            document.getElementById('display-ritual').innerText = goal;
+            loadIntentions();
+        };
+    </script>
+</body>
+</html>
