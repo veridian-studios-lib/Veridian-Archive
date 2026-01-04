@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veridian | The Chronicles</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #D4AF37; --bg: #0F0A05; }
+        body { 
+            font-family: 'Fauna One', serif; background-color: #0F0A05; color: #D4AF37; 
+            margin: 0; min-height: 100vh; padding: 20px;
+        }
+        .lux-serif { font-family: 'Cinzel', serif; letter-spacing: 0.2em; }
+        
+        .history-item {
+            border-left: 2px solid rgba(212, 175, 55, 0.2);
+            padding: 15px 25px; margin-bottom: 25px;
+            position: relative; transition: 0.3s; cursor: pointer;
+        }
+        .history-item:hover { border-left-color: var(--gold); background: rgba(212, 175, 55, 0.03); }
+        
+        .history-item::before {
+            content: ''; position: absolute; left: -6px; top: 20px;
+            width: 10px; height: 10px; background: #0F0A05;
+            border: 2px solid rgba(212, 175, 55, 0.5); border-radius: 50%;
+        }
+
+        .timestamp { font-size: 9px; opacity: 0.4; text-transform: uppercase; letter-spacing: 1px; }
+    </style>
+</head>
+<body class="max-w-2xl mx-auto">
+
+    <header class="py-10">
+        <button onclick="window.location.href='dashboard.html'" class="text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-all cursor-pointer">← Back to Dashboard</button>
+        <h1 class="lux-serif text-3xl mt-4">THE CHRONICLES</h1>
+        <p class="text-[10px] opacity-50 mt-1 uppercase tracking-tighter">Your recent journeys through the archive</p>
+    </header>
+
+    <div id="history-content">
+        </div>
+
+    <script>
+        async function manifestHistory() {
+            const container = document.getElementById('history-content');
+            const library = await localforage.getItem('veridian_library') || [];
+            
+            // Filter only books that have been opened (have a lastRead timestamp)
+            // Then sort by most recent first
+            const history = library
+                .filter(book => book.lastRead)
+                .sort((a, b) => b.lastRead - a.lastRead);
+
+            if (history.length === 0) {
+                container.innerHTML = `<p class="opacity-30 italic text-center mt-20">No journeys have been recorded in the chronicles yet.</p>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            history.forEach(book => {
+                const date = new Date(book.lastRead).toLocaleString('en-US', { 
+                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                });
+                
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.onclick = () => window.location.href = `reader.html?id=${book.id}`;
+                item.innerHTML = `
+                    <p class="timestamp">${date}</p>
+                    <h3 class="text-md font-bold uppercase mt-1">${book.title}</h3>
+                    <p class="text-[10px] opacity-60 italic">Resumed journey...</p>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        window.onload = manifestHistory;
+    </script>
+</body>
+</html>
