@@ -11,11 +11,14 @@
         body.light-mode { --bg: #F3F0E6; --card: #E2DFD2; --text: #1F150D; }
         body { font-family: 'Fauna One', serif; background-color: var(--bg); color: var(--text); transition: 0.5s; margin: 0; }
         .lux-serif { font-family: 'Cinzel', serif; letter-spacing: 0.2em; }
+        
         .menu-item {
             background: var(--card); border: 1px solid rgba(212, 175, 55, 0.2);
             padding: 25px; border-radius: 8px; margin-bottom: 15px;
             cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: space-between;
         }
+        .menu-item:hover { border-color: var(--gold); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
+        
         .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; inset: 0; background-color: #333; transition: .4s; border-radius: 34px; border: 1px solid var(--gold); }
@@ -24,29 +27,41 @@
         input:checked + .slider:before { transform: translateX(26px); background-color: var(--bg); }
     </style>
 </head>
-<body class="p-8">
+<body class="p-8 max-w-2xl mx-auto">
     <header class="mb-10">
-        <button onclick="window.location.href='index.html'" class="text-[10px] uppercase opacity-50">← Return</button>
+        <button onclick="window.location.href='index.html'" class="text-[10px] uppercase opacity-50 hover:opacity-100 transition-opacity cursor-pointer">← Return to Gallery</button>
         <h1 class="lux-serif text-2xl mt-4">ARCHIVE MODES</h1>
     </header>
 
-    <div class="menu-item">
-        <div><h2 class="lux-serif text-sm">HISTORY</h2><p class="text-[10px] opacity-60">Your recent journeys</p></div>
+    <div class="menu-item opacity-50 cursor-not-allowed">
+        <div>
+            <h2 class="lux-serif text-sm">HISTORY</h2>
+            <p class="text-[10px] opacity-60">Your recent journeys</p>
+        </div>
         <span>📜</span>
     </div>
 
-    <div class="menu-item">
-        <div><h2 class="lux-serif text-sm">STARRED</h2><p class="text-[10px] opacity-60">Sacred favorites</p></div>
+    <div class="menu-item opacity-50 cursor-not-allowed">
+        <div>
+            <h2 class="lux-serif text-sm">STARRED</h2>
+            <p class="text-[10px] opacity-60">Sacred favorites</p>
+        </div>
         <span>⭐</span>
     </div>
 
-    <div class="menu-item">
-        <div><h2 class="lux-serif text-sm">BOOKS & DOCS</h2><p class="text-[10px] opacity-60">Categorized wisdom</p></div>
-        <span>📚</span>
+    <div class="menu-item" onclick="window.location.href='vault.html'">
+        <div>
+            <h2 class="lux-serif text-sm">BOOKS & DOCS</h2>
+            <p class="text-[10px] opacity-60">Categorized wisdom</p>
+        </div>
+        <span class="text-xl">📚</span>
     </div>
 
     <div class="menu-item">
-        <div><h2 class="lux-serif text-sm">THEME</h2><p id="mode-label" class="text-[10px] opacity-60">Dark Mode</p></div>
+        <div>
+            <h2 class="lux-serif text-sm">THEME</h2>
+            <p id="mode-label" class="text-[10px] opacity-60">Dark Mode</p>
+        </div>
         <label class="switch">
             <input type="checkbox" id="theme-toggle" onchange="toggleTheme()">
             <span class="slider"></span>
@@ -60,6 +75,7 @@
             document.getElementById('mode-label').innerText = isLight ? "Light Mode" : "Dark Mode";
             localStorage.setItem('veridian-theme', isLight ? 'light' : 'dark');
         }
+
         window.onload = () => {
             if(localStorage.getItem('veridian-theme') === 'light') {
                 document.body.classList.add('light-mode');
