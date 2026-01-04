@@ -14,7 +14,7 @@
         
         body { 
             font-family: 'Fauna One', serif; background: #050505; color: var(--paper);
-            display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0;
             padding: 20px;
         }
 
@@ -46,28 +46,33 @@
             border: none; border-bottom: 1px solid rgba(212, 175, 55, 0.1);
             width: 100%; color: var(--paper); padding: 15px; margin-bottom: 20px;
             outline: none; transition: 0.4s; font-family: 'Fauna One', serif;
-            appearance: none; /* Removes default browser styling */
+            appearance: none;
         }
 
-        /* Style for the dropdown options */
-        select option {
-            background: #1A140E;
-            color: var(--gold);
-        }
-
+        select option { background: #1A140E; color: var(--gold); }
         input:focus, textarea:focus, select:focus { border-bottom-color: var(--gold); background: rgba(212, 175, 55, 0.05); }
 
         .lux-btn {
-            width: 100%; padding: 18px; border: 1px solid var(--gold);
+            width: 100%; padding: 15px; border: 1px solid var(--gold);
             color: var(--gold); background: transparent; cursor: pointer;
-            font-family: 'Cinzel', serif; letter-spacing: 0.3em; transition: 0.5s;
-            margin-top: 10px;
+            font-family: 'Cinzel', serif; letter-spacing: 0.2em; transition: 0.5s;
+            margin-top: 10px; font-size: 11px;
         }
 
-        .lux-btn:hover { background: var(--gold); color: black; box-shadow: 0 0 30px rgba(212, 175, 55, 0.4); }
+        .lux-btn:hover { background: var(--gold); color: black; box-shadow: 0 0 20px rgba(212, 175, 55, 0.4); }
+
+        .forge-btn { border-color: #555; color: #888; margin-top: 20px; }
+        .forge-btn:hover { border-color: #00ff00; color: #00ff00; background: transparent; box-shadow: none; }
 
         h1 { font-family: 'Cinzel', serif; letter-spacing: 0.4em; color: var(--gold); margin-bottom: 30px; }
         #status { font-size: 10px; color: var(--gold); letter-spacing: 0.2em; text-transform: uppercase; margin-top: 10px; display: block; height: 15px; }
+
+        .output-area {
+            display: none; width: 100%; max-width: 600px; background: #000; 
+            color: #0f0; font-family: monospace; font-size: 10px; 
+            padding: 20px; margin-top: 20px; border: 1px dashed var(--gold);
+            white-space: pre-wrap; z-index: 10;
+        }
     </style>
 </head>
 <body>
@@ -99,7 +104,11 @@
         <textarea id="bookContent" rows="5" placeholder="Or paste manually... Use double spaces for new pages."></textarea>
         
         <button class="lux-btn" id="commit-btn" onclick="saveToArchive()">Commit to Archive</button>
+        
+        <button class="lux-btn forge-btn" onclick="forgeJSON()">Forge Global JSON Code</button>
     </div>
+
+    <div id="forgeOutput" class="output-area"></div>
 
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
@@ -138,6 +147,35 @@
             reader.readAsArrayBuffer(file);
         });
 
+        // --- FORGE FUNCTION FOR THE LIBRARIAN ---
+        function forgeJSON() {
+            const title = document.getElementById('bookTitle').value;
+            const author = document.getElementById('bookAuthor').value || "ANONYMOUS";
+            const category = document.getElementById('bookCategory').value;
+            const text = document.getElementById('bookContent').value;
+
+            if(!title || !text || !category) {
+                alert("The Forge requires a Title, Category, and Content.");
+                return;
+            }
+
+            const bookObject = {
+                id: title.toLowerCase().replace(/\s+/g, '-') + "-" + Date.now(),
+                title: title.toUpperCase(),
+                author: author.toUpperCase(),
+                category: category,
+                content: text.split('\n\n').filter(p => p.trim() !== "").map(p => {
+                    // Split paragraphs into sentences for the TTS reader
+                    return p.match(/[^.!?]+[.!?]+/g) || [p];
+                })
+            };
+
+            const output = document.getElementById('forgeOutput');
+            output.innerText = JSON.stringify(bookObject, null, 4) + ",";
+            output.style.display = "block";
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+
         async function saveToArchive() {
             const title = document.getElementById('bookTitle').value;
             const author = document.getElementById('bookAuthor').value || "ANONYMOUS";
@@ -154,7 +192,9 @@
                 title: title.toUpperCase(),
                 author: author.toUpperCase(),
                 category: category,
-                content: text.split('\n\n').filter(p => p.trim() !== "").map(p => [p])
+                content: text.split('\n\n').filter(p => p.trim() !== "").map(p => {
+                    return p.match(/[^.!?]+[.!?]+/g) || [p];
+                })
             };
 
             try {
