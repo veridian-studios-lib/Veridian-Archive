@@ -50,11 +50,11 @@
         <div class="text-4xl opacity-10">📜</div>
     </header>
 
-    <div id="vault-content">
-        </div>
+    <div id="vault-content"></div>
 
     <script>
-        const categories = ["Philosophy", "History", "Science", "Documents", "Other"];
+        // Added "Uncategorized" to the list to catch older books
+        const categories = ["Philosophy", "History", "Science", "Documents", "Other", "Uncategorized"];
 
         async function manifestVault() {
             const vaultContent = document.getElementById('vault-content');
@@ -63,7 +63,14 @@
             vaultContent.innerHTML = ''; 
 
             categories.forEach(cat => {
-                const filteredBooks = library.filter(book => book.category === cat);
+                // Special filter: if category is Uncategorized, find books with NO category property
+                const filteredBooks = library.filter(book => {
+                    if (cat === "Uncategorized") {
+                        return !book.category || book.category === "Uncategorized";
+                    }
+                    return book.category === cat;
+                });
+
                 const section = document.createElement('div');
                 section.className = 'category-section';
                 
@@ -76,7 +83,7 @@
                 const listContainer = document.getElementById(`list-${cat}`);
 
                 if (filteredBooks.length === 0) {
-                    listContainer.innerHTML = `<p class="empty-msg">No scrolls sacrificed to this section yet...</p>`;
+                    listContainer.innerHTML = `<p class="empty-msg">No scrolls here...</p>`;
                 } else {
                     filteredBooks.forEach(book => {
                         const item = document.createElement('div');
@@ -97,13 +104,8 @@
         async function obliterateScroll(bookId) {
             if (confirm("Are you sure you wish to erase this scroll from the archive forever?")) {
                 let library = await localforage.getItem('veridian_library') || [];
-                // Filter out the book to be deleted
                 library = library.filter(book => book.id !== bookId);
-                
-                // Save the updated library back to storage
                 await localforage.setItem('veridian_library', library);
-                
-                // Refresh the vault view
                 manifestVault();
             }
         }
