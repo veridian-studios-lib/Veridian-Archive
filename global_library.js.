@@ -1,0 +1,30 @@
+/**
+ * VERIDIAN GLOBAL LIBRARY
+ * This is the central repository for all scrolls available to the public.
+ * * INSTRUCTIONS FOR THE LIBRARIAN:
+ * 1. Use upload.html to "Forge" a new JSON block.
+ * 2. Paste the generated block inside the GLOBAL_BOOKS array below.
+ * 3. Ensure each book is separated by a comma.
+ */
+
+const GLOBAL_BOOKS = [
+    {
+        "id": "atomic-habits-01",
+        "title": "ATOMIC HABITS",
+        "author": "JAMES CLEAR",
+        "category": "Science",
+        "content": [
+            ["Success is the product of daily habits—not once-in-a-lifetime transformations.", "You should be far more concerned with your current trajectory than with your current results."]
+        ]
+    },
+    {
+        "id": "meditations-01",
+        "title": "MEDITATIONS",
+        "author": "MARCUS高度 AURELIUS",
+        "category": "Philosophy",
+        "content": [
+            ["You have power over your mind—not outside events.", "Realize this, and you will find strength."]
+        ]
+    }
+    // <--- PASTE NEW FORGED BLOCKS HERE --->
+];
