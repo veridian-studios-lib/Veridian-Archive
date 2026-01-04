@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veridian | Social Portals</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #D4AF37; --bg: #0F0A05; --card: #1A140E; }
+        body { font-family: 'Fauna One', serif; background-color: var(--bg); color: var(--gold); margin: 0; }
+        .lux-serif { font-family: 'Cinzel', serif; letter-spacing: 0.2em; }
+        
+        .portal-card {
+            background: var(--card); border: 1px solid rgba(212, 175, 55, 0.1);
+            padding: 25px; border-radius: 12px; margin-bottom: 20px;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .portal-card:hover { border-color: var(--gold); transform: translateY(-3px); }
+        
+        .btn-link {
+            display: inline-block; margin-top: 15px; padding: 8px 20px;
+            border: 1px solid var(--gold); border-radius: 4px;
+            font-size: 0.7rem; font-weight: bold; letter-spacing: 0.1em; transition: 0.3s;
+            text-decoration: none; color: var(--gold);
+        }
+        .btn-link:hover { background: var(--gold); color: #000; }
+        
+        .locked { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; }
+    </style>
+</head>
+<body class="p-6 md:p-12 max-w-2xl mx-auto">
+    
+    <header class="mb-10 text-center md:text-left">
+        <button onclick="window.location.href='index.html'" class="text-[10px] uppercase opacity-40 hover:opacity-100 transition-opacity cursor-pointer">← Back to Archive</button>
+        <h1 class="lux-serif text-3xl mt-4">SOCIAL PORTALS</h1>
+        <p class="text-xs italic opacity-50 mt-2">Connecting the Sanctum to the outside world.</p>
+    </header>
+
+    <section class="portal-card">
+        <div class="flex items-center gap-4 mb-4">
+            <span class="text-3xl">💬</span>
+            <h2 class="lux-serif text-lg">DISCORD COMMUNITY</h2>
+        </div>
+        <p class="text-sm opacity-70 leading-relaxed">
+            The heart of our community. Join us for real-time Q&A, detailed rules of the Archive, community feedback, and direct interaction with other seekers of wisdom.
+        </p>
+        <a href="https://discord.gg/5HCDXNaVVw" target="_blank" class="btn-link lux-serif uppercase">Enter Server</a>
+    </section>
+
+    <section class="portal-card">
+        <div class="flex items-center gap-4 mb-4">
+            <span class="text-3xl">🎬</span>
+            <h2 class="lux-serif text-lg">YOUTUBE CHANNEL</h2>
+        </div>
+        <p class="text-sm opacity-70 leading-relaxed">
+            Future home of Veridian animations and promotions. I am currently honing my skills in animation and editing to bring you high-quality visual wisdom.
+        </p>
+        <div class="mt-4 text-[10px] font-bold uppercase tracking-widest text-white/40 border-t border-white/10 pt-4">
+            Manifesting in ~3 Months
+        </div>
+    </section>
+
+    <section class="portal-card locked">
+        <div class="flex items-center gap-4 mb-4">
+            <span class="text-3xl">📱</span>
+            <h2 class="lux-serif text-lg">OTHER WEBPAGES & APPS</h2>
+        </div>
+        <p class="text-sm opacity-70 leading-relaxed">
+            New tools and experimental applications are currently under development in the deeper vaults of the archive.
+        </p>
+    </section>
+
+</body>
+</html>
