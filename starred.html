@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veridian | Sacred Favorites</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #D4AF37; --bg: #0F0A05; --card: #1A140E; }
+        body { 
+            font-family: 'Fauna One', serif; background-color: #0F0A05; color: #D4AF37; 
+            margin: 0; min-height: 100vh; padding: 20px;
+        }
+        .lux-serif { font-family: 'Cinzel', serif; letter-spacing: 0.2em; }
+        
+        .star-item {
+            background: linear-gradient(145deg, #1A140E 0%, #0F0A05 100%);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            padding: 25px; border-radius: 12px; margin-bottom: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            transition: 0.4s;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.05);
+        }
+        .star-item:hover { 
+            border-color: var(--gold); 
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
+            transform: translateY(-3px);
+        }
+        
+        .unstar-btn {
+            font-size: 1.5rem; cursor: pointer; filter: drop-shadow(0 0 5px var(--gold));
+            transition: 0.3s;
+        }
+        .unstar-btn:hover { transform: scale(1.2); }
+
+        .empty-state {
+            text-align: center; margin-top: 100px; opacity: 0.4;
+        }
+    </style>
+</head>
+<body class="max-w-2xl mx-auto">
+
+    <header class="py-10 text-center border-b border-gold/10 mb-12">
+        <button onclick="window.location.href='dashboard.html'" class="text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-all cursor-pointer">← Back to Dashboard</button>
+        <h1 class="lux-serif text-3xl mt-4" style="text-shadow: 0 0 15px rgba(212, 175, 55, 0.4);">SACRED FAVORITES</h1>
+        <p class="text-[10px] italic mt-2 opacity-60">The scrolls you have deemed eternal.</p>
+    </header>
+
+    <div id="starred-content">
+        </div>
+
+    <script>
+        async function manifestStarred() {
+            const container = document.getElementById('starred-content');
+            const library = await localforage.getItem('veridian_library') || [];
+            
+            // Filter for only starred books
+            const starredBooks = library.filter(book => book.starred === true);
+
+            if (starredBooks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="text-5xl">⭐</span>
+                        <p class="lux-serif mt-4 uppercase text-xs tracking-widest">No favorites have been marked yet.</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            starredBooks.forEach(book => {
+                const item = document.createElement('div');
+                item.className = 'star-item';
+                item.innerHTML = `
+                    <div onclick="window.location.href='reader.html?id=${book.id}'" class="flex-1 cursor-pointer">
+                        <h3 class="text-lg font-bold uppercase tracking-widest">${book.title}</h3>
+                        <p class="text-[10px] opacity-60 mt-1">CATEGORY: ${book.category || 'UNCATEGORIZED'}</p>
+                    </div>
+                    <div class="unstar-btn" onclick="toggleStar('${book.id}')">⭐</div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        async function toggleStar(bookId) {
+            let library = await localforage.getItem('veridian_library') || [];
+            const bookIndex = library.findIndex(b => b.id === bookId);
+            
+            if (bookIndex > -1) {
+                // Remove star
+                library[bookIndex].starred = false;
+                await localforage.setItem('veridian_library', library);
+                manifestStarred(); // Refresh view
+            }
+        }
+
+        window.onload = manifestStarred;
+    </script>
+</body>
+</html>
