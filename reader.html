@@ -68,11 +68,24 @@
         .play-ring { width: 55px; height: 55px; border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         
         .back-btn { position: fixed; top: 25px; left: 25px; z-index: 100; color: var(--gold); font-size: 10px; letter-spacing: 0.3em; opacity: 0.4; }
+        
+        /* STAR ICON STYLE */
+        .star-toggle { 
+            position: fixed; top: 20px; right: 25px; z-index: 100; 
+            font-size: 1.5rem; cursor: pointer; transition: 0.4s; 
+            filter: grayscale(1) opacity(0.3); 
+        }
+        .star-toggle.active { 
+            filter: grayscale(0) opacity(1); 
+            text-shadow: 0 0 15px var(--gold);
+        }
     </style>
 </head>
 <body>
 
     <button class="back-btn uppercase" onclick="window.location.href='index.html'">← Close</button>
+    
+    <div id="star-btn" class="star-toggle" onclick="toggleStar()">⭐</div>
 
     <div id="unlock-screen" onclick="startSanctum()">
         <p class="text-[#D4AF37] italic opacity-40 mb-4" id="load-status">The Archive Awaits</p>
@@ -97,7 +110,7 @@
 
     <script>
         let archive = [["The vault is currently silent.", "Sacrifice a scroll to begin the journey."]];
-        let currentMetadata = { title: "Veridian Scroll", author: "The Archive" };
+        let currentMetadata = { id: null, title: "Veridian Scroll", author: "The Archive", starred: false };
         
         const staticBooks = {
             "1": [["A reader lives a thousand lives before he dies.", "The man who never reads lives only one.", "Books are a uniquely portable magic."]],
@@ -113,6 +126,7 @@
         async function loadBookData() {
             const params = new URLSearchParams(window.location.search);
             const bookId = params.get('id');
+            currentMetadata.id = bookId;
 
             if (staticBooks[bookId]) {
                 archive = staticBooks[bookId];
@@ -124,19 +138,42 @@
                     if (found) {
                         currentMetadata.title = found.title;
                         currentMetadata.author = found.author;
+                        currentMetadata.starred = found.starred || false;
                         archive = found.content.map(pageArray => {
                             return pageArray[0].match(/[^.!?]+[.!?]+/g) || [pageArray[0]];
                         });
+                        
+                        // Set visual state of star
+                        if(currentMetadata.starred) document.getElementById('star-btn').classList.add('active');
                     }
                 } catch (e) { console.error("Vault Error", e); }
             }
             updateMediaSession();
         }
 
-        // --- ENHANCED SILENT HEARTBEAT ---
+        async function toggleStar() {
+            if (!currentMetadata.id) return;
+            
+            const btn = document.getElementById('star-btn');
+            currentMetadata.starred = !currentMetadata.starred;
+            
+            // UI Update
+            if(currentMetadata.starred) btn.classList.add('active');
+            else btn.classList.remove('active');
+
+            // Save to LocalForage
+            try {
+                let library = await localforage.getItem('veridian_library') || [];
+                const index = library.findIndex(b => b.id === currentMetadata.id);
+                if (index !== -1) {
+                    library[index].starred = currentMetadata.starred;
+                    await localforage.setItem('veridian_library', library);
+                }
+            } catch (e) { console.error("Starring Failed", e); }
+        }
+
         function startHeartbeat() {
             if (!audioCtx) return;
-            // Constant silent pulse to keep the OS from suspending the tab
             const silence = audioCtx.createBuffer(1, 44100, 44100);
             heartbeat = audioCtx.createBufferSource();
             heartbeat.buffer = silence;
@@ -169,7 +206,6 @@
 
         async function startSanctum() {
             await loadBookData();
-            // Initialize AudioContext on first user tap
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             audioCtx.resume();
             document.getElementById('unlock-screen').style.opacity = '0';
@@ -243,7 +279,7 @@
             } 
             else { 
                 document.getElementById('play-btn').innerText = "‖"; 
-                startHeartbeat(); // Keeps CPU awake for TTS engine
+                startHeartbeat(); 
                 speak(); 
                 if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "playing";
             }
