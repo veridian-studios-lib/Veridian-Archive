@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veridian | The Great Library</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <script src="global_library.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #D4AF37; --bg: #0F0A05; --card: #1A140E; }
+        body { font-family: 'Fauna One', serif; background-color: var(--bg); color: var(--gold); margin: 0; padding: 20px; }
+        .lux-serif { font-family: 'Cinzel', serif; letter-spacing: 0.15em; }
+        
+        .search-bar {
+            background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.2);
+            color: var(--gold); padding: 15px; border-radius: 8px; width: 100%; outline: none;
+            font-size: 1rem; text-align: center; margin-bottom: 30px;
+        }
+
+        .book-card {
+            background: var(--card); border: 1px solid rgba(212, 175, 55, 0.1);
+            padding: 20px; border-radius: 12px; transition: 0.3s;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .book-card:hover { border-color: var(--gold); transform: translateY(-5px); }
+        
+        .add-btn {
+            background: var(--gold); color: black; font-weight: bold;
+            padding: 8px; border-radius: 50%; width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.3s;
+        }
+        .add-btn:hover { transform: scale(1.1); box-shadow: 0 0 15px var(--gold); }
+    </style>
+</head>
+<body class="max-w-4xl mx-auto">
+
+    <header class="py-10 text-center">
+        <button onclick="window.location.href='dashboard.html'" class="text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-all">← Back to Dashboard</button>
+        <h1 class="lux-serif text-3xl mt-4">THE GREAT LIBRARY</h1>
+        <p class="text-[10px] opacity-50 uppercase mt-1">Explore the Shared Archive</p>
+    </header>
+
+    <input type="text" id="searchInput" class="search-bar" placeholder="Search Wisdom..." oninput="searchLibrary()">
+
+    <div id="library-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        </div>
+
+    <script>
+        function renderBooks(books) {
+            const grid = document.getElementById('library-grid');
+            grid.innerHTML = '';
+            
+            books.forEach(book => {
+                const card = document.createElement('div');
+                card.className = 'book-card';
+                card.innerHTML = `
+                    <div>
+                        <p class="text-[9px] opacity-40 uppercase tracking-widest">${book.category || 'General'}</p>
+                        <h3 class="lux-serif text-sm mt-2 font-bold">${book.title}</h3>
+                        <p class="text-[10px] italic opacity-60">By ${book.author}</p>
+                    </div>
+                    <div class="flex justify-end mt-4">
+                        <button onclick="addToPersonalVault('${book.id}')" class="add-btn">+</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function searchLibrary() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = GLOBAL_BOOKS.filter(b => 
+                b.title.toLowerCase().includes(query) || 
+                b.author.toLowerCase().includes(query)
+            );
+            renderBooks(filtered);
+        }
+
+        async function addToPersonalVault(id) {
+            const bookToCopy = GLOBAL_BOOKS.find(b => b.id === id);
+            if (!bookToCopy) return;
+
+            try {
+                let library = await localforage.getItem('veridian_library') || [];
+                // Check if already exists
+                if (library.some(b => b.id === id)) {
+                    alert("This scroll is already in your Vault.");
+                    return;
+                }
+                
+                library.push(bookToCopy);
+                await localforage.setItem('veridian_library', library);
+                alert("Scroll sacrificed to your personal Archive!");
+            } catch (e) {
+                console.error("Import failed", e);
+            }
+        }
+
+        window.onload = () => renderBooks(GLOBAL_BOOKS);
+    </script>
+</body>
+</html>
