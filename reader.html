@@ -96,6 +96,16 @@
     
     <div id="star-btn" class="star-toggle" onclick="toggleStar()">⭐</div>
 
+<div id="bm-btn" style="position: fixed; top: 20px; right: 70px; z-index: 100; font-size: 1.5rem; cursor: pointer; opacity: 0.4;" onclick="toggleBookmarkMenu()">🔖</div>
+
+<div id="bm-menu" style="position: fixed; top: 0; right: -300px; width: 280px; height: 100%; background: #080808; border-left: 1px solid #D4AF37; z-index: 1000; transition: 0.4s; padding: 80px 20px; overflow-y: auto;">
+    <h3 style="color: #D4AF37; font-family: 'Cinzel'; font-size: 12px; letter-spacing: 2px; margin-bottom: 20px;">INSCRIPTIONS</h3>
+    <button onclick="addQuickBookmark()" style="width: 100%; padding: 10px; border: 1px solid #D4AF37; color: #D4AF37; background: transparent; font-size: 10px; margin-bottom: 20px;">+ NEW BOOKMARK</button>
+    <div id="bm-list"></div>
+    <button onclick="toggleBookmarkMenu()" style="color: #D4AF37; opacity: 0.5; font-size: 10px; margin-top: 20px;">CLOSE</button>
+</div>
+    
+
     <div id="unlock-screen" onclick="startSanctum()">
         <p class="text-[#D4AF37] italic opacity-40 mb-4" id="load-status">The Archive Awaits</p>
         <button class="px-8 py-3 border border-[#D4AF37]/30 text-[#D4AF37] uppercase tracking-widest text-xs hover:bg-[#D4AF37] hover:text-black transition-all">Enter Sanctum</button>
