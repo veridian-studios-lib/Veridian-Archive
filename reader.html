@@ -26,11 +26,10 @@
         .bookmark-card {
             background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.1);
             padding: 15px; margin-bottom: 12px; border-radius: 4px; cursor: pointer; 
-            transition: 0.3s; position: relative; overflow: hidden;
+            transition: 0.3s; position: relative;
         }
         .bookmark-card:hover { border-color: var(--gold); background: rgba(212, 175, 55, 0.1); }
         
-        /* NEW: Delete Button Style */
         .del-bm {
             position: absolute; top: 0; right: 0; height: 100%; width: 40px;
             display: flex; align-items: center; justify-content: center;
@@ -103,7 +102,7 @@
         .back-label { font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--gold); opacity: 0.4; cursor: pointer; }
     </style>
 </head>
-<body>
+<body id="ritual-body">
 
     <div id="ritual-toast">RITUAL COMPLETE 📜</div>
 
@@ -149,6 +148,7 @@
         const synth = window.speechSynthesis;
         let audioCtx;
         let touchStartX = 0;
+        const mainPage = document.getElementById('main-page');
 
         async function loadBookData() {
             const params = new URLSearchParams(window.location.search);
@@ -171,6 +171,45 @@
             } catch (e) { console.error("Vault Error", e); }
         }
 
+        // --- FIXED TOUCH LOGIC ---
+        document.getElementById('ritual-body').addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, {passive: true});
+
+        document.getElementById('ritual-body').addEventListener('touchend', e => {
+            let diff = touchStartX - e.changedTouches[0].screenX;
+            if (Math.abs(diff) > 70) flipPage(diff > 0 ? 1 : -1);
+        }, {passive: true});
+
+        function flipPage(dir) {
+            if ((dir === 1 && pIdx < archive.length - 1) || (dir === -1 && pIdx > 0)) {
+                // Trigger Smart Word Count for current page before flipping
+                if (dir === 1) archive[pIdx].forEach(s => logProgress(s));
+
+                const stage = document.getElementById('book-stage');
+                const ghost = document.createElement('div');
+                
+                if (dir === 1) {
+                    ghost.className = 'ghost-forward'; 
+                    ghost.innerHTML = mainPage.innerHTML;
+                    stage.appendChild(ghost); 
+                    setTimeout(() => ghost.classList.add('peel-to-left'), 10);
+                    pIdx++; sIdx = 0; 
+                } else {
+                    pIdx--; sIdx = 0;
+                    render(); // Render previous page content first
+                    ghost.className = 'ghost-backward'; 
+                    ghost.innerHTML = mainPage.innerHTML;
+                    stage.appendChild(ghost); 
+                    setTimeout(() => ghost.classList.add('return-to-center'), 10);
+                }
+                
+                render();
+                setTimeout(() => ghost.remove(), 1200);
+                if (isPlaying) speak();
+            }
+        }
+
         function toggleBookmarkPanel() { document.getElementById('bookmark-panel').classList.toggle('active'); }
 
         async function saveCurrentBookmark() {
@@ -181,7 +220,6 @@
             renderBookmarks();
         }
 
-        // NEW: Enhanced Render with Delete Button
         function renderBookmarks() {
             const list = document.getElementById('bookmark-list');
             list.innerHTML = currentMetadata.bookmarks.map((bm, i) => `
@@ -193,10 +231,9 @@
             `).join('');
         }
 
-        // NEW: Delete Function
         async function deleteBookmark(e, index) {
-            e.stopPropagation(); // Prevents jumping to bookmark when clicking delete
-            if (confirm("Erase this inscription from the archive?")) {
+            e.stopPropagation();
+            if (confirm("Erase this inscription?")) {
                 currentMetadata.bookmarks.splice(index, 1);
                 await saveBookState();
                 renderBookmarks();
@@ -232,25 +269,6 @@
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             document.getElementById('unlock-screen').style.opacity = '0';
             setTimeout(() => { document.getElementById('unlock-screen').remove(); render(); }, 600);
-        }
-
-        function flipPage(dir) {
-            if ((dir === 1 && pIdx < archive.length - 1) || (dir === -1 && pIdx > 0)) {
-                if (dir === 1) archive[pIdx].forEach(s => logProgress(s));
-                const stage = document.getElementById('book-stage');
-                const ghost = document.createElement('div');
-                if (dir === 1) {
-                    ghost.className = 'ghost-forward'; ghost.innerHTML = mainPage.innerHTML;
-                    stage.appendChild(ghost); setTimeout(() => ghost.classList.add('peel-to-left'), 10);
-                    pIdx++; sIdx = 0; render();
-                } else {
-                    ghost.className = 'ghost-backward'; pIdx--; sIdx = 0; render();
-                    ghost.innerHTML = mainPage.innerHTML; stage.appendChild(ghost);
-                    setTimeout(() => ghost.classList.add('return-to-center'), 10);
-                }
-                setTimeout(() => ghost.remove(), 1200);
-                if (isPlaying) speak();
-            }
         }
 
         function render() {
