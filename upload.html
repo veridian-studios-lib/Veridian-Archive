@@ -61,7 +61,6 @@
 
         .lux-btn:hover { background: var(--gold); color: black; box-shadow: 0 0 20px rgba(212, 175, 55, 0.4); }
 
-        /* HIDE THE FORGE BUTTON BY DEFAULT */
         .forge-btn { 
             display: none; 
             border-color: #555; 
@@ -70,7 +69,7 @@
         }
         .forge-btn:hover { border-color: #00ff00; color: #00ff00; background: transparent; box-shadow: none; }
 
-        h1 { font-family: 'Cinzel', serif; letter-spacing: 0.4em; color: var(--gold); margin-bottom: 30px; }
+        h1 { font-family: 'Cinzel', serif; letter-spacing: 0.4em; color: var(--gold); margin-bottom: 30px; cursor: pointer; }
         #status { font-size: 10px; color: var(--gold); letter-spacing: 0.2em; text-transform: uppercase; margin-top: 10px; display: block; height: 15px; }
 
         .output-area {
@@ -87,7 +86,7 @@
     <button onclick="window.location.href='index.html'" class="fixed top-6 left-6 text-[#D4AF37] opacity-40 hover:opacity-100 uppercase text-[9px] tracking-[0.4em] z-[100] transition-all">← Return</button>
 
     <div class="parchment-form">
-        <h1 class="text-center text-xl uppercase">The Scriptorium</h1>
+        <h1 class="text-center text-xl uppercase" id="scriptorium-title">The Scriptorium</h1>
         
         <div class="drop-zone" onclick="document.getElementById('file-input').click()">
             <p class="text-[10px] uppercase tracking-widest opacity-60">Sacrifice a PDF to the vault</p>
@@ -119,36 +118,48 @@
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
-        // --- SECRET LIBRARIAN LOGIN SYSTEM ---
-        let inputBuffer = "";
-        const librarianKey = "veridian"; // <--- THIS IS YOUR PASSWORD
+        // --- LIBRARIAN ACCESS LOGIC ---
+        const librarianKey = "veridian"; 
+        const statusDisp = document.getElementById('status');
+        const forgeBtn = document.getElementById('admin-forge-btn');
 
+        // 1. MOBILE: Double-Tap Title
+        let lastTap = 0;
+        document.getElementById('scriptorium-title').addEventListener('touchend', function(e) {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            if (tapLength < 500 && tapLength > 0) {
+                const pass = prompt("Enter Librarian Key:");
+                if(pass === librarianKey) unlockForge();
+            }
+            lastTap = currentTime;
+        });
+
+        // 2. DESKTOP: Keyboard Listener
+        let inputBuffer = "";
         document.addEventListener('keydown', (e) => {
             inputBuffer += e.key.toLowerCase();
-            
-            // Only keep the length of the password in memory
             if (inputBuffer.length > librarianKey.length) {
                 inputBuffer = inputBuffer.substring(inputBuffer.length - librarianKey.length);
             }
-
-            // Check if user typed the password
-            if (inputBuffer === librarianKey) {
-                const forgeBtn = document.getElementById('admin-forge-btn');
-                forgeBtn.style.display = 'block';
-                document.getElementById('status').innerText = "MASTER LIBRARIAN LOGGED IN";
-                document.getElementById('status').style.color = "#00ff00";
-                inputBuffer = ""; // Clear buffer
-            }
+            if (inputBuffer === librarianKey) unlockForge();
         });
 
+        function unlockForge() {
+            forgeBtn.style.display = 'block';
+            statusDisp.innerText = "MASTER LIBRARIAN LOGGED IN";
+            statusDisp.style.color = "#00ff00";
+            inputBuffer = "";
+        }
+
+        // --- PDF PROCESSING LOGIC ---
         const fileInput = document.getElementById('file-input');
-        const status = document.getElementById('status');
 
         fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
-            status.innerText = "ALCHEMIZING: " + file.name.toUpperCase();
+            statusDisp.innerText = "ALCHEMIZING: " + file.name.toUpperCase();
             document.getElementById('bookTitle').value = file.name.replace('.pdf', '').toUpperCase();
 
             const reader = new FileReader();
@@ -166,10 +177,9 @@
                     }
                     
                     document.getElementById('bookContent').value = fullText;
-                    status.innerText = "WISDOM EXTRACTED (" + pdf.numPages + " PAGES)";
+                    statusDisp.innerText = "WISDOM EXTRACTED (" + pdf.numPages + " PAGES)";
                 } catch (err) {
-                    status.innerText = "ERROR: SCROLL PROTECTED OR INVALID";
-                    console.error(err);
+                    statusDisp.innerText = "ERROR: SCROLL PROTECTED OR INVALID";
                 }
             };
             reader.readAsArrayBuffer(file);
@@ -227,15 +237,12 @@
                 let library = await localforage.getItem('veridian_library') || [];
                 library.push(newBook);
                 await localforage.setItem('veridian_library', library);
-
                 const btn = document.getElementById('commit-btn');
                 btn.innerText = "ETCHED IN THE DEEP VAULT";
                 btn.style.background = "#D4AF37";
                 btn.style.color = "black";
-
                 setTimeout(() => window.location.href = 'index.html', 1200);
             } catch (err) {
-                console.error(err);
                 alert("The Deep Vault failed to store this scroll.");
             }
         }
