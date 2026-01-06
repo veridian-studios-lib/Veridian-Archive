@@ -27,6 +27,15 @@
             pointer-events: none;
         }
 
+        /* Ritual Notification Toast */
+        #ritual-toast {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            background: var(--gold); color: black; padding: 12px 25px;
+            font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 2px;
+            border-radius: 40px; z-index: 1000; transition: 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.4);
+        }
+
         .stage {
             position: relative; width: 92vw; max-width: 500px; height: 80vh;
             perspective: 2000px; z-index: 10;
@@ -82,6 +91,8 @@
 </head>
 <body>
 
+    <div id="ritual-toast">RITUAL COMPLETE 📜</div>
+
     <button class="back-btn uppercase" onclick="window.location.href='index.html'">← Close</button>
     
     <div id="star-btn" class="star-toggle" onclick="toggleStar()">⭐</div>
@@ -111,54 +122,73 @@
         let archive = [["The vault is currently silent.", "Sacrifice a scroll to begin the journey."]];
         let currentMetadata = { id: null, title: "Veridian Scroll", author: "The Archive", starred: false };
         
-        const staticBooks = {
-            "1": [["A reader lives a thousand lives before he dies.", "The man who never reads lives only one.", "Books are a uniquely portable magic."]],
-            "2": [["Wisdom begins in wonder.", "The only true wisdom is in knowing you know nothing.", "Knowledge speaks, but wisdom listens."]],
-            "3": [["Nature does not hurry, yet everything is accomplished.", "To be grounded is to be powerful.", "The oak fought the wind and broke, the willow bent and survived."]]
-        };
-
         let pIdx = 0; let sIdx = 0; let isPlaying = false;
         const synth = window.speechSynthesis;
         let audioCtx, heartbeat;
         let touchStartX = 0;
+
+        // --- NEW TRACKING VARIABLES ---
+        let startTime = Date.now();
+        let ritualGoalMinutes = 20;
+        let ritualNotified = false;
 
         async function loadBookData() {
             const params = new URLSearchParams(window.location.search);
             const bookId = params.get('id');
             currentMetadata.id = bookId;
 
-            if (staticBooks[bookId]) {
-                archive = staticBooks[bookId];
-                currentMetadata.title = "Ancient Volume " + bookId;
-            } else {
-                try {
-                    const library = await localforage.getItem('veridian_library') || [];
-                    const found = library.find(b => b.id === bookId);
-                    if (found) {
-                        currentMetadata.title = found.title;
-                        currentMetadata.author = found.author;
-                        currentMetadata.starred = found.starred || false;
-                        archive = found.content.map(pageArray => {
-                            return pageArray[0].match(/[^.!?]+[.!?]+/g) || [pageArray[0]];
-                        });
-                        
-                        // NEW: Update history timestamp when book is opened
-                        updateHistory(bookId);
+            // Load Ritual Goal
+            const savedGoal = await localforage.getItem('veridian_ritual_goal');
+            if(savedGoal) ritualGoalMinutes = parseInt(savedGoal);
 
-                        if(currentMetadata.starred) document.getElementById('star-btn').classList.add('active');
-                    }
-                } catch (e) { console.error("Vault Error", e); }
-            }
+            try {
+                const library = await localforage.getItem('veridian_library') || [];
+                const found = library.find(b => b.id === bookId);
+                if (found) {
+                    currentMetadata.title = found.title;
+                    currentMetadata.author = found.author;
+                    currentMetadata.starred = found.starred || false;
+                    archive = found.content;
+                    
+                    updateHistory(bookId);
+                    if(currentMetadata.starred) document.getElementById('star-btn').classList.add('active');
+                }
+            } catch (e) { console.error("Vault Error", e); }
             updateMediaSession();
         }
 
-        // --- NEW HISTORY FUNCTION ---
+        // --- LOG PROGRESS (WORDS & TIME) ---
+        async function logProgress(sentenceText) {
+            // Count words in the current sentence
+            const words = sentenceText.trim().split(/\s+/).length;
+            const today = new Date().toISOString().split('T')[0];
+
+            try {
+                let stats = await localforage.getItem('reading_stats') || {};
+                stats[today] = (stats[today] || 0) + words;
+                await localforage.setItem('reading_stats', stats);
+
+                // Check Ritual Goal
+                const elapsedMinutes = (Date.now() - startTime) / 60000;
+                if (elapsedMinutes >= ritualGoalMinutes && !ritualNotified) {
+                    notifyRitual();
+                }
+            } catch (e) { console.error("Stats Log Failed", e); }
+        }
+
+        function notifyRitual() {
+            ritualNotified = true;
+            const toast = document.getElementById('ritual-toast');
+            toast.style.top = "40px";
+            setTimeout(() => { toast.style.top = "-100px"; }, 5000);
+        }
+
         async function updateHistory(bookId) {
             try {
                 let library = await localforage.getItem('veridian_library') || [];
                 const index = library.findIndex(b => b.id === bookId);
                 if (index !== -1) {
-                    library[index].lastRead = Date.now(); // Store current time
+                    library[index].lastRead = Date.now();
                     await localforage.setItem('veridian_library', library);
                 }
             } catch (e) { console.error("History Log Failed", e); }
@@ -219,6 +249,7 @@
             audioCtx.resume();
             document.getElementById('unlock-screen').style.opacity = '0';
             setTimeout(() => { document.getElementById('unlock-screen').remove(); render(); }, 600);
+            startTime = Date.now(); // Reset timer on enter
         }
 
         const mainPage = document.getElementById('main-page');
@@ -248,6 +279,7 @@
                 playSFX();
                 setTimeout(() => ghost.remove(), 1200);
                 if (isPlaying) speak();
+                else logProgress(archive[pIdx][sIdx]); // Log when page flipped manually
             }
         }
 
@@ -270,7 +302,11 @@
         function skipSentence(dir) {
             if (audioCtx) audioCtx.resume();
             if (dir === 1) {
-                if (sIdx < archive[pIdx].length - 1) { sIdx++; if (isPlaying) speak(); else updateHighlight(); } 
+                if (sIdx < archive[pIdx].length - 1) { 
+                    logProgress(archive[pIdx][sIdx]);
+                    sIdx++; 
+                    if (isPlaying) speak(); else updateHighlight(); 
+                } 
                 else { flipPage(1); }
             } else {
                 if (sIdx > 0) { sIdx--; if (isPlaying) speak(); else updateHighlight(); } 
@@ -284,13 +320,11 @@
                 synth.cancel(); 
                 stopHeartbeat();
                 document.getElementById('play-btn').innerText = "▶"; 
-                if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "paused";
             } 
             else { 
                 document.getElementById('play-btn').innerText = "‖"; 
                 startHeartbeat(); 
                 speak(); 
-                if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "playing";
             }
             isPlaying = !isPlaying;
         }
@@ -299,6 +333,10 @@
             if (!isPlaying) return;
             synth.cancel();
             updateHighlight();
+            
+            // Log words as they are being read
+            logProgress(archive[pIdx][sIdx]);
+
             const msg = new SpeechSynthesisUtterance(archive[pIdx][sIdx]);
             msg.pitch = 0.6; msg.rate = 0.85; 
             msg.onend = () => {
