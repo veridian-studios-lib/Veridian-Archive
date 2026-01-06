@@ -61,7 +61,13 @@
 
         .lux-btn:hover { background: var(--gold); color: black; box-shadow: 0 0 20px rgba(212, 175, 55, 0.4); }
 
-        .forge-btn { border-color: #555; color: #888; margin-top: 20px; }
+        /* HIDE THE FORGE BUTTON BY DEFAULT */
+        .forge-btn { 
+            display: none; 
+            border-color: #555; 
+            color: #888; 
+            margin-top: 20px; 
+        }
         .forge-btn:hover { border-color: #00ff00; color: #00ff00; background: transparent; box-shadow: none; }
 
         h1 { font-family: 'Cinzel', serif; letter-spacing: 0.4em; color: var(--gold); margin-bottom: 30px; }
@@ -105,13 +111,35 @@
         
         <button class="lux-btn" id="commit-btn" onclick="saveToArchive()">Commit to Archive</button>
         
-        <button class="lux-btn forge-btn" onclick="forgeJSON()">Forge Global JSON Code</button>
+        <button class="lux-btn forge-btn" id="admin-forge-btn" onclick="forgeJSON()">Forge Global JSON Code</button>
     </div>
 
     <div id="forgeOutput" class="output-area"></div>
 
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+        // --- SECRET LIBRARIAN LOGIN SYSTEM ---
+        let inputBuffer = "";
+        const librarianKey = "veridian"; // <--- THIS IS YOUR PASSWORD
+
+        document.addEventListener('keydown', (e) => {
+            inputBuffer += e.key.toLowerCase();
+            
+            // Only keep the length of the password in memory
+            if (inputBuffer.length > librarianKey.length) {
+                inputBuffer = inputBuffer.substring(inputBuffer.length - librarianKey.length);
+            }
+
+            // Check if user typed the password
+            if (inputBuffer === librarianKey) {
+                const forgeBtn = document.getElementById('admin-forge-btn');
+                forgeBtn.style.display = 'block';
+                document.getElementById('status').innerText = "MASTER LIBRARIAN LOGGED IN";
+                document.getElementById('status').style.color = "#00ff00";
+                inputBuffer = ""; // Clear buffer
+            }
+        });
 
         const fileInput = document.getElementById('file-input');
         const status = document.getElementById('status');
@@ -147,7 +175,6 @@
             reader.readAsArrayBuffer(file);
         });
 
-        // --- FORGE FUNCTION FOR THE LIBRARIAN ---
         function forgeJSON() {
             const title = document.getElementById('bookTitle').value;
             const author = document.getElementById('bookAuthor').value || "ANONYMOUS";
@@ -165,7 +192,6 @@
                 author: author.toUpperCase(),
                 category: category,
                 content: text.split('\n\n').filter(p => p.trim() !== "").map(p => {
-                    // Split paragraphs into sentences for the TTS reader
                     return p.match(/[^.!?]+[.!?]+/g) || [p];
                 })
             };
