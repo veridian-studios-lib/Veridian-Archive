@@ -13,89 +13,145 @@
         body { font-family: 'Fauna One', serif; background-color: var(--bg); color: var(--gold); margin: 0; padding: 20px; }
         .lux-serif { font-family: 'Cinzel', serif; letter-spacing: 0.15em; }
         
+        /* Smooth Search Bar */
         .search-bar {
-            background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.2);
-            color: var(--gold); padding: 15px; border-radius: 8px; width: 100%; outline: none;
-            font-size: 1rem; text-align: center; margin-bottom: 30px;
+            background: rgba(212, 175, 55, 0.03); border: 1px solid rgba(212, 175, 55, 0.1);
+            color: var(--gold); padding: 18px; border-radius: 4px; width: 100%; outline: none;
+            font-size: 0.9rem; text-align: center; margin-bottom: 40px; transition: 0.3s;
         }
+        .search-bar:focus { border-color: var(--gold); background: rgba(212, 175, 55, 0.08); }
 
+        /* Elegant Book Cards */
         .book-card {
-            background: var(--card); border: 1px solid rgba(212, 175, 55, 0.1);
-            padding: 20px; border-radius: 12px; transition: 0.3s;
-            display: flex; flex-direction: column; justify-content: space-between;
+            background: var(--card); border: 1px solid rgba(212, 175, 55, 0.08);
+            padding: 24px; border-radius: 4px; transition: 0.4s;
+            display: flex; flex-direction: column; position: relative; overflow: hidden;
         }
-        .book-card:hover { border-color: var(--gold); transform: translateY(-5px); }
+        .book-card:hover { border-color: var(--gold); transform: translateY(-3px); background: #221a12; }
         
-        .add-btn {
-            background: var(--gold); color: black; font-weight: bold;
-            padding: 8px; border-radius: 50%; width: 40px; height: 40px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: 0.3s;
+        /* The Commit Icon Button */
+        .commit-btn {
+            border: 1px solid var(--gold); color: var(--gold);
+            padding: 8px 16px; font-size: 10px; font-family: 'Cinzel';
+            cursor: pointer; transition: 0.3s; background: transparent;
+            letter-spacing: 2px;
         }
-        .add-btn:hover { transform: scale(1.1); box-shadow: 0 0 15px var(--gold); }
+        .commit-btn:hover { background: var(--gold); color: black; }
+        .commit-btn:disabled { opacity: 0.3; cursor: default; border-color: gray; color: gray; }
+
+        /* Portal Button */
+        .wisdom-portal {
+            display: inline-block; padding: 20px 40px; border: 1px solid var(--gold);
+            color: var(--gold); text-decoration: none; font-family: 'Cinzel';
+            font-size: 12px; letter-spacing: 3px; transition: 0.5s;
+            background: rgba(212, 175, 55, 0.02); margin-top: 20px;
+        }
+        .wisdom-portal:hover { background: var(--gold); color: black; box-shadow: 0 0 30px rgba(212,175,55,0.2); }
     </style>
 </head>
-<body class="max-w-4xl mx-auto">
+<body class="max-w-5xl mx-auto">
 
-    <header class="py-10 text-center">
+    <header class="py-16 text-center">
         <button onclick="window.location.href='dashboard.html'" class="text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-all">← Back to Dashboard</button>
-        <h1 class="lux-serif text-3xl mt-4">THE GREAT LIBRARY</h1>
-        <p class="text-[10px] opacity-50 uppercase mt-1">Explore the Shared Archive</p>
+        <h1 class="lux-serif text-4xl mt-6">THE GREAT LIBRARY</h1>
+        <div class="h-[1px] w-20 bg-[#D4AF37] mx-auto my-4 opacity-30"></div>
+        <p class="text-[10px] opacity-50 uppercase tracking-[0.3em]">Commit Ancient Scrolls to your Archive</p>
     </header>
 
-    <input type="text" id="searchInput" class="search-bar" placeholder="Search Wisdom..." oninput="searchLibrary()">
+    <input type="text" id="searchInput" class="search-bar lux-serif" placeholder="SEARCH THE ARCHIVE..." oninput="searchLibrary()">
 
-    <div id="library-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div id="library-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         </div>
 
+    <footer class="mt-32 mb-20 text-center border-t border-white/5 pt-20">
+        <p class="lux-serif text-[11px] opacity-40 mb-6">Thirsting for further Enlightenment?</p>
+        <a href="https://www.gutenberg.org/" target="_blank" class="wisdom-portal">
+            DISCOVER MORE WISDOM
+        </a>
+        <p class="text-[9px] opacity-30 mt-8">LINKING TO PROJECT GUTENBERG</p>
+    </footer>
+
     <script>
-        function renderBooks(books) {
+        async function renderBooks(books) {
             const grid = document.getElementById('library-grid');
             grid.innerHTML = '';
             
+            // Get local library to check if already "Committed"
+            const localLibrary = await localforage.getItem('veridian_library') || [];
+            
             books.forEach(book => {
+                const isAlreadyStored = localLibrary.some(b => b.id === idSanitizer(book.id));
                 const card = document.createElement('div');
                 card.className = 'book-card';
                 card.innerHTML = `
-                    <div>
-                        <p class="text-[9px] opacity-40 uppercase tracking-widest">${book.category || 'General'}</p>
-                        <h3 class="lux-serif text-sm mt-2 font-bold">${book.title}</h3>
-                        <p class="text-[10px] italic opacity-60">By ${book.author}</p>
+                    <div class="mb-6">
+                        <div class="flex justify-between items-start">
+                            <p class="text-[8px] opacity-40 uppercase tracking-widest mb-2">${book.category || 'General'}</p>
+                            <p class="text-[8px] opacity-40 font-mono">${book.pages || '???'} PGS</p>
+                        </div>
+                        <h3 class="lux-serif text-md mt-1 font-bold leading-tight">${book.title}</h3>
+                        <p class="text-[10px] italic opacity-60 mt-2">By ${book.author}</p>
                     </div>
-                    <div class="flex justify-end mt-4">
-                        <button onclick="addToPersonalVault('${book.id}')" class="add-btn">+</button>
+                    <div class="mt-auto flex justify-between items-center">
+                        <div class="text-[14px] opacity-30">🔖</div>
+                        <button id="btn-${idSanitizer(book.id)}" 
+                                onclick="commitToArchive('${idSanitizer(book.id)}')" 
+                                class="commit-btn" ${isAlreadyStored ? 'disabled' : ''}>
+                            ${isAlreadyStored ? 'INSCRIBED' : 'COMMIT'}
+                        </button>
                     </div>
                 `;
                 grid.appendChild(card);
             });
         }
 
+        // Simple helper to handle IDs with spaces or dots
+        function idSanitizer(id) {
+            return id.replace(/\s+/g, '-').toLowerCase();
+        }
+
         function searchLibrary() {
             const query = document.getElementById('searchInput').value.toLowerCase();
             const filtered = GLOBAL_BOOKS.filter(b => 
                 b.title.toLowerCase().includes(query) || 
-                b.author.toLowerCase().includes(query)
+                b.author.toLowerCase().includes(query) ||
+                (b.category && b.category.toLowerCase().includes(query))
             );
             renderBooks(filtered);
         }
 
-        async function addToPersonalVault(id) {
-            const bookToCopy = GLOBAL_BOOKS.find(b => b.id === id);
+        async function commitToArchive(id) {
+            const bookToCopy = GLOBAL_BOOKS.find(b => idSanitizer(b.id) === id);
             if (!bookToCopy) return;
+
+            const btn = document.getElementById(`btn-${id}`);
+            const originalText = btn.innerText;
+            btn.innerText = "SCRIBING...";
 
             try {
                 let library = await localforage.getItem('veridian_library') || [];
-                // Check if already exists
-                if (library.some(b => b.id === id)) {
-                    alert("This scroll is already in your Vault.");
+                
+                // Double check existence
+                if (library.some(b => idSanitizer(b.id) === id)) {
+                    btn.innerText = "INSCRIBED";
+                    btn.disabled = true;
                     return;
                 }
                 
+                // Add to library
                 library.push(bookToCopy);
                 await localforage.setItem('veridian_library', library);
-                alert("Scroll sacrificed to your personal Archive!");
+                
+                // Success State
+                setTimeout(() => {
+                    btn.innerText = "INSCRIBED";
+                    btn.disabled = true;
+                }, 800);
+
             } catch (e) {
-                console.error("Import failed", e);
+                console.error("Archive failure", e);
+                btn.innerText = "FAILED";
+                setTimeout(() => { btn.innerText = originalText; }, 2000);
             }
         }
 
