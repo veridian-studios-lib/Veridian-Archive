@@ -7,7 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
-    <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
+    <script src='https://unpkg.com/tesseract.js@4.0.2/dist/tesseract.min.js'></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #D4AF37; --paper: #F3F0E6; }
@@ -26,7 +27,7 @@
         }
 
         .parchment-form {
-            background: rgba(20, 15, 10, 0.9);
+            background: rgba(20, 15, 10, 0.95);
             border: 1px solid rgba(212, 175, 55, 0.2);
             padding: clamp(20px, 5vw, 50px);
             border-radius: 4px; width: 100%; max-width: 600px;
@@ -60,9 +61,9 @@
         video { width: 100%; border: 1px solid var(--gold); border-radius: 4px; }
         .snap-btn {
             position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
-            background: var(--gold); color: black; border-radius: 50%; width: 50px; height: 50px;
+            background: var(--gold); color: black; border-radius: 50%; width: 60px; height: 60px;
             display: flex; align-items: center; justify-content: center; cursor: pointer;
-            box-shadow: 0 0 15px var(--gold);
+            box-shadow: 0 0 15px var(--gold); border: 2px solid white; z-index: 20;
         }
 
         .lux-btn {
@@ -72,12 +73,13 @@
             margin-top: 10px; font-size: 11px;
         }
         .lux-btn:hover { background: var(--gold); color: black; }
-        .lux-btn:disabled { opacity: 0.5; cursor: wait; }
+        
+        #progress-container {
+            width: 100%; background: rgba(255,255,255,0.1); height: 4px; 
+            margin-top: 10px; border-radius: 2px; overflow: hidden; display: none;
+        }
+        #progress-bar { width: 0%; height: 100%; background: var(--gold); transition: width 0.3s; }
 
-        .forge-btn { display: none; border-color: #555; color: #888; margin-top: 20px; }
-        
-        #progress-bar { width: 0%; height: 2px; background: var(--gold); transition: width 0.3s; margin-top: 5px; }
-        
         h1 { font-family: 'Cinzel', serif; letter-spacing: 0.4em; color: var(--gold); margin-bottom: 30px; }
     </style>
 </head>
@@ -87,23 +89,27 @@
     <button onclick="window.location.href='dashboard.html'" class="fixed top-6 left-6 text-[#D4AF37] opacity-40 hover:opacity-100 uppercase text-[9px] tracking-[0.4em] z-[100] transition-all">← Dashboard</button>
 
     <div class="parchment-form">
-        <h1 class="text-center text-xl uppercase" id="scriptorium-title">The Scriptorium</h1>
+        <h1 class="text-center text-xl uppercase">The Scriptorium</h1>
 
         <input type="text" id="bookTitle" placeholder="TITLE OF THE WORK">
         <input type="text" id="bookAuthor" placeholder="NAME OF THE SCRIBE">
+        
         <select id="bookCategory">
             <option value="" disabled selected>SELECT CATEGORY</option>
             <option value="Philosophy">Philosophy</option>
             <option value="History">History</option>
             <option value="Science">Science</option>
             <option value="Fiction">Fiction</option>
-            <option value="Original">Veridian Original</option>
+            <option value="Poetry">Poetry</option>
+            <option value="Biography">Biography</option>
+            <option value="Religion">Religion</option>
+            <option value="Other">Other Wisdom</option>
         </select>
 
         <div class="flex gap-2 mb-4">
-            <button onclick="toggleTool('write')" class="flex-1 py-2 text-[10px] border border-white/20 hover:bg-white/5">✍️ WRITE</button>
-            <button onclick="toggleTool('pdf')" class="flex-1 py-2 text-[10px] border border-white/20 hover:bg-white/5">📄 PDF</button>
-            <button onclick="toggleTool('camera')" class="flex-1 py-2 text-[10px] border border-white/20 hover:bg-white/5">📸 CAMERA</button>
+            <button onclick="toggleTool('write')" class="flex-1 py-2 text-[10px] border border-white/20 hover:bg-white/5 uppercase">✍️ Manual</button>
+            <button onclick="toggleTool('pdf')" class="flex-1 py-2 text-[10px] border border-white/20 hover:bg-white/5 uppercase">📄 PDF</button>
+            <button onclick="toggleTool('camera')" class="flex-1 py-2 text-[10px] border border-white/20 hover:bg-white/5 uppercase">📸 Camera</button>
         </div>
 
         <div id="camera-section" class="input-group hidden">
@@ -111,12 +117,18 @@
             
             <div id="camera-ui">
                 <video id="video-feed" autoplay playsinline></video>
-                <button onclick="capturePage()" class="snap-btn">📷</button>
+                <button onclick="capturePage()" class="snap-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                </button>
             </div>
             
             <button id="start-cam-btn" onclick="startCamera()" class="lux-btn">ACTIVATE LENS</button>
-            <div id="ocr-status" class="text-[9px] text-center mt-2 text-[#D4AF37]">READY TO SCAN PAGE 1</div>
-            <div id="progress-bar"></div>
+            
+            <div id="ocr-status" class="text-[9px] text-center mt-3 text-[#D4AF37] min-h-[15px]"></div>
+            <div id="progress-container"><div id="progress-bar"></div></div>
         </div>
 
         <div id="pdf-section" class="input-group hidden">
@@ -126,22 +138,21 @@
             </div>
         </div>
 
-        <p class="text-[9px] opacity-40 mt-4 mb-1">SCROLL CONTENT (EDITABLE)</p>
-        <textarea id="bookContent" rows="8" placeholder="The wisdom will appear here..."></textarea>
+        <p class="text-[9px] opacity-40 mt-4 mb-1 uppercase tracking-widest">Scroll Content (Editable)</p>
+        <textarea id="bookContent" rows="8" placeholder="The extracted wisdom will appear here..."></textarea>
         
         <button class="lux-btn" id="commit-btn" onclick="saveToArchive()">COMMIT TO ARCHIVE</button>
-        <button class="lux-btn forge-btn" id="admin-forge-btn" onclick="forgeJSON()">FORGE JSON</button>
     </div>
 
     <canvas id="canvas" style="display:none;"></canvas>
-
-    <div id="forgeOutput" class="hidden w-full max-w-xl bg-black text-green-500 p-4 mt-4 text-[10px] font-mono border border-gold"></div>
 
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
         
         let pageCount = 0;
         const statusDisp = document.getElementById('ocr-status');
+        const progBar = document.getElementById('progress-bar');
+        const progContainer = document.getElementById('progress-container');
 
         // --- TOOL SWITCHING ---
         function toggleTool(tool) {
@@ -155,13 +166,18 @@
         // --- CAMERA & OCR LOGIC ---
         async function startCamera() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                // Request back camera specifically
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
                 const video = document.getElementById('video-feed');
                 video.srcObject = stream;
                 document.getElementById('camera-ui').style.display = 'block';
                 document.getElementById('start-cam-btn').style.display = 'none';
+                statusDisp.innerText = "CAMERA ACTIVE. ALIGN TEXT AND SNAP.";
             } catch (err) {
-                alert("Camera access denied or unavailable.");
+                console.error(err);
+                alert("Could not access camera. Please allow permissions.");
             }
         }
 
@@ -170,23 +186,35 @@
             const canvas = document.getElementById('canvas');
             const context = canvas.getContext('2d');
 
-            // Set canvas size to match video
+            // Set canvas size to match video resolution
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // Run Alchemy (OCR)
             runOCR(canvas);
         }
 
         function runOCR(canvas) {
-            statusDisp.innerText = "EXTRACTING INK... (DO NOT MOVE)";
-            document.getElementById('progress-bar').style.width = "50%";
+            statusDisp.innerText = "INITIALIZING ALCHEMY...";
+            progContainer.style.display = 'block';
+            progBar.style.width = "10%";
 
+            // Using Tesseract with detailed logging
             Tesseract.recognize(
                 canvas,
                 'eng',
-                { logger: m => console.log(m) }
+                { 
+                    logger: m => {
+                        console.log(m);
+                        if (m.status === 'recognizing text') {
+                            statusDisp.innerText = `READING INK... ${(m.progress * 100).toFixed(0)}%`;
+                            progBar.style.width = `${m.progress * 100}%`;
+                        } else {
+                            // Show download status for language files
+                            statusDisp.innerText = m.status.toUpperCase();
+                        }
+                    }
+                }
             ).then(({ data: { text } }) => {
                 pageCount++;
                 const cleanText = text.replace(/\n\s*\n/g, '\n'); // Remove extra empty lines
@@ -196,8 +224,13 @@
                 const separator = currentContent ? "\n\n" : "";
                 document.getElementById('bookContent').value = currentContent + separator + cleanText;
 
-                statusDisp.innerText = `PAGE ${pageCount} CAPTURED. READY FOR NEXT PAGE.`;
-                document.getElementById('progress-bar').style.width = "0%";
+                statusDisp.innerText = `PAGE ${pageCount} CAPTURED.`;
+                progBar.style.width = "0%";
+                setTimeout(() => { progContainer.style.display = 'none'; }, 1000);
+            }).catch(err => {
+                console.error(err);
+                statusDisp.innerText = "ALCHEMY FAILED. TRY AGAIN.";
+                progBar.style.background = "red";
             });
         }
 
@@ -231,15 +264,15 @@
 
             if(!title || !content || !category) return alert("The Scroll is incomplete.");
 
-            // Create book object compatible with reader.html
             const newBook = {
                 id: "manual-" + Date.now(),
                 title: title.toUpperCase(),
                 author: author.toUpperCase(),
                 category: category,
-                content: content, // Save as raw text, reader handles parsing
+                content: content, 
                 bookmarks: [],
-                lastPosition: { pIdx: 0, sIdx: 0 }
+                lastPosition: { pIdx: 0, sIdx: 0 },
+                lastRead: Date.now()
             };
 
             let library = await localforage.getItem('veridian_library') || [];
@@ -248,40 +281,9 @@
             
             const btn = document.getElementById('commit-btn');
             btn.innerText = "INSCRIBED";
+            btn.style.background = "green";
+            btn.style.color = "white";
             setTimeout(() => window.location.href = 'dashboard.html', 1000);
-        }
-
-        // --- ADMIN FORGE (Hidden) ---
-        const librarianKey = "veridian"; 
-        let inputBuffer = "";
-        
-        // Double tap title for mobile
-        let lastTap = 0;
-        document.getElementById('scriptorium-title').addEventListener('touchend', (e) => {
-            const now = new Date().getTime();
-            if (now - lastTap < 500) {
-                if(prompt("Enter Key:") === librarianKey) document.getElementById('admin-forge-btn').style.display='block';
-            }
-            lastTap = now;
-        });
-        
-        // Keyboard for desktop
-        document.addEventListener('keydown', (e) => {
-            inputBuffer += e.key.toLowerCase();
-            if (inputBuffer.includes(librarianKey)) document.getElementById('admin-forge-btn').style.display='block';
-        });
-
-        function forgeJSON() {
-            const newBook = {
-                id: document.getElementById('bookTitle').value.toLowerCase().replace(/\s/g,'-'),
-                title: document.getElementById('bookTitle').value.toUpperCase(),
-                author: document.getElementById('bookAuthor').value.toUpperCase(),
-                category: document.getElementById('bookCategory').value,
-                content: document.getElementById('bookContent').value.split('\n\n')
-            };
-            const out = document.getElementById('forgeOutput');
-            out.classList.remove('hidden');
-            out.innerText = JSON.stringify(newBook, null, 4) + ",";
         }
     </script>
 </body>
