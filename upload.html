@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #D4AF37; --paper: #F3F0E6; }
@@ -14,7 +15,7 @@
         
         body { 
             font-family: 'Fauna One', serif; background: #050505; color: var(--paper);
-            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0;
             padding: 20px;
         }
 
@@ -31,26 +32,38 @@
             border-radius: 4px; width: 100%; max-width: 600px;
             box-shadow: 0 40px 100px rgba(0,0,0,0.9);
             backdrop-filter: blur(10px);
-            z-index: 10;
+            z-index: 10; margin-top: 60px;
+        }
+
+        .input-group {
+            border: 1px solid rgba(212, 175, 55, 0.1);
+            padding: 15px; margin-bottom: 20px; border-radius: 4px;
+            background: rgba(255, 255, 255, 0.02);
         }
 
         .drop-zone {
             border: 1px dashed rgba(212, 175, 55, 0.3);
-            padding: 30px; text-align: center; margin-bottom: 25px;
-            cursor: pointer; transition: 0.3s; background: rgba(255,255,255,0.02);
+            padding: 20px; text-align: center; cursor: pointer; transition: 0.3s;
         }
         .drop-zone:hover { border-color: var(--gold); background: rgba(212, 175, 55, 0.05); }
 
         input, textarea, select {
-            background: rgba(255, 255, 255, 0.03);
-            border: none; border-bottom: 1px solid rgba(212, 175, 55, 0.1);
-            width: 100%; color: var(--paper); padding: 15px; margin-bottom: 20px;
+            background: transparent; border: none; border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            width: 100%; color: var(--paper); padding: 10px 0; margin-bottom: 15px;
             outline: none; transition: 0.4s; font-family: 'Fauna One', serif;
-            appearance: none;
         }
-
+        input:focus, textarea:focus, select:focus { border-bottom-color: var(--gold); }
         select option { background: #1A140E; color: var(--gold); }
-        input:focus, textarea:focus, select:focus { border-bottom-color: var(--gold); background: rgba(212, 175, 55, 0.05); }
+
+        /* Camera UI */
+        #camera-ui { display: none; position: relative; margin-bottom: 20px; }
+        video { width: 100%; border: 1px solid var(--gold); border-radius: 4px; }
+        .snap-btn {
+            position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+            background: var(--gold); color: black; border-radius: 50%; width: 50px; height: 50px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            box-shadow: 0 0 15px var(--gold);
+        }
 
         .lux-btn {
             width: 100%; padding: 15px; border: 1px solid var(--gold);
@@ -58,193 +71,217 @@
             font-family: 'Cinzel', serif; letter-spacing: 0.2em; transition: 0.5s;
             margin-top: 10px; font-size: 11px;
         }
+        .lux-btn:hover { background: var(--gold); color: black; }
+        .lux-btn:disabled { opacity: 0.5; cursor: wait; }
 
-        .lux-btn:hover { background: var(--gold); color: black; box-shadow: 0 0 20px rgba(212, 175, 55, 0.4); }
-
-        .forge-btn { 
-            display: none; 
-            border-color: #555; 
-            color: #888; 
-            margin-top: 20px; 
-        }
-        .forge-btn:hover { border-color: #00ff00; color: #00ff00; background: transparent; box-shadow: none; }
-
-        h1 { font-family: 'Cinzel', serif; letter-spacing: 0.4em; color: var(--gold); margin-bottom: 30px; cursor: pointer; }
-        #status { font-size: 10px; color: var(--gold); letter-spacing: 0.2em; text-transform: uppercase; margin-top: 10px; display: block; height: 15px; }
-
-        .output-area {
-            display: none; width: 100%; max-width: 600px; background: #000; 
-            color: #0f0; font-family: monospace; font-size: 10px; 
-            padding: 20px; margin-top: 20px; border: 1px dashed var(--gold);
-            white-space: pre-wrap; z-index: 10;
-        }
+        .forge-btn { display: none; border-color: #555; color: #888; margin-top: 20px; }
+        
+        #progress-bar { width: 0%; height: 2px; background: var(--gold); transition: width 0.3s; margin-top: 5px; }
+        
+        h1 { font-family: 'Cinzel', serif; letter-spacing: 0.4em; color: var(--gold); margin-bottom: 30px; }
     </style>
 </head>
 <body>
     <div class="lamp-glow"></div>
 
-    <button onclick="window.location.href='index.html'" class="fixed top-6 left-6 text-[#D4AF37] opacity-40 hover:opacity-100 uppercase text-[9px] tracking-[0.4em] z-[100] transition-all">← Return</button>
+    <button onclick="window.location.href='dashboard.html'" class="fixed top-6 left-6 text-[#D4AF37] opacity-40 hover:opacity-100 uppercase text-[9px] tracking-[0.4em] z-[100] transition-all">← Dashboard</button>
 
     <div class="parchment-form">
         <h1 class="text-center text-xl uppercase" id="scriptorium-title">The Scriptorium</h1>
-        
-        <div class="drop-zone" onclick="document.getElementById('file-input').click()">
-            <p class="text-[10px] uppercase tracking-widest opacity-60">Sacrifice a PDF to the vault</p>
-            <span id="status">Waiting for scroll...</span>
-            <input type="file" id="file-input" hidden accept=".pdf">
-        </div>
 
-        <input type="text" id="bookTitle" placeholder="Title of the Work">
-        <input type="text" id="bookAuthor" placeholder="Author/Ahsan Shahzad">
-        
+        <input type="text" id="bookTitle" placeholder="TITLE OF THE WORK">
+        <input type="text" id="bookAuthor" placeholder="NAME OF THE SCRIBE">
         <select id="bookCategory">
-            <option value="" disabled selected>Select Category</option>
+            <option value="" disabled selected>SELECT CATEGORY</option>
             <option value="Philosophy">Philosophy</option>
             <option value="History">History</option>
             <option value="Science">Science</option>
-            <option value="Documents">Documents</option>
-            <option value="Other">Other Wisdom</option>
+            <option value="Fiction">Fiction</option>
+            <option value="Original">Veridian Original</option>
         </select>
 
-        <textarea id="bookContent" rows="5" placeholder="Or paste manually... Use double spaces for new pages."></textarea>
+        <div class="flex gap-2 mb-4">
+            <button onclick="toggleTool('write')" class="flex-1 py-2 text-[10px] border border-white/20 hover:bg-white/5">✍️ WRITE</button>
+            <button onclick="toggleTool('pdf')" class="flex-1 py-2 text-[10px] border border-white/20 hover:bg-white/5">📄 PDF</button>
+            <button onclick="toggleTool('camera')" class="flex-1 py-2 text-[10px] border border-white/20 hover:bg-white/5">📸 CAMERA</button>
+        </div>
+
+        <div id="camera-section" class="input-group hidden">
+            <p class="text-[10px] uppercase tracking-widest opacity-60 mb-2">Optical Alchemy (OCR)</p>
+            
+            <div id="camera-ui">
+                <video id="video-feed" autoplay playsinline></video>
+                <button onclick="capturePage()" class="snap-btn">📷</button>
+            </div>
+            
+            <button id="start-cam-btn" onclick="startCamera()" class="lux-btn">ACTIVATE LENS</button>
+            <div id="ocr-status" class="text-[9px] text-center mt-2 text-[#D4AF37]">READY TO SCAN PAGE 1</div>
+            <div id="progress-bar"></div>
+        </div>
+
+        <div id="pdf-section" class="input-group hidden">
+            <div class="drop-zone" onclick="document.getElementById('file-input').click()">
+                <p class="text-[10px] uppercase tracking-widest opacity-60">Sacrifice a PDF</p>
+                <input type="file" id="file-input" hidden accept=".pdf">
+            </div>
+        </div>
+
+        <p class="text-[9px] opacity-40 mt-4 mb-1">SCROLL CONTENT (EDITABLE)</p>
+        <textarea id="bookContent" rows="8" placeholder="The wisdom will appear here..."></textarea>
         
-        <button class="lux-btn" id="commit-btn" onclick="saveToArchive()">Commit to Archive</button>
-        
-        <button class="lux-btn forge-btn" id="admin-forge-btn" onclick="forgeJSON()">Forge Global JSON Code</button>
+        <button class="lux-btn" id="commit-btn" onclick="saveToArchive()">COMMIT TO ARCHIVE</button>
+        <button class="lux-btn forge-btn" id="admin-forge-btn" onclick="forgeJSON()">FORGE JSON</button>
     </div>
 
-    <div id="forgeOutput" class="output-area"></div>
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <div id="forgeOutput" class="hidden w-full max-w-xl bg-black text-green-500 p-4 mt-4 text-[10px] font-mono border border-gold"></div>
 
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+        
+        let pageCount = 0;
+        const statusDisp = document.getElementById('ocr-status');
 
-        // --- LIBRARIAN ACCESS LOGIC ---
-        const librarianKey = "veridian"; 
-        const statusDisp = document.getElementById('status');
-        const forgeBtn = document.getElementById('admin-forge-btn');
-
-        // 1. MOBILE: Double-Tap Title
-        let lastTap = 0;
-        document.getElementById('scriptorium-title').addEventListener('touchend', function(e) {
-            const currentTime = new Date().getTime();
-            const tapLength = currentTime - lastTap;
-            if (tapLength < 500 && tapLength > 0) {
-                const pass = prompt("Enter Librarian Key:");
-                if(pass === librarianKey) unlockForge();
-            }
-            lastTap = currentTime;
-        });
-
-        // 2. DESKTOP: Keyboard Listener
-        let inputBuffer = "";
-        document.addEventListener('keydown', (e) => {
-            inputBuffer += e.key.toLowerCase();
-            if (inputBuffer.length > librarianKey.length) {
-                inputBuffer = inputBuffer.substring(inputBuffer.length - librarianKey.length);
-            }
-            if (inputBuffer === librarianKey) unlockForge();
-        });
-
-        function unlockForge() {
-            forgeBtn.style.display = 'block';
-            statusDisp.innerText = "MASTER LIBRARIAN LOGGED IN";
-            statusDisp.style.color = "#00ff00";
-            inputBuffer = "";
+        // --- TOOL SWITCHING ---
+        function toggleTool(tool) {
+            document.getElementById('camera-section').classList.add('hidden');
+            document.getElementById('pdf-section').classList.add('hidden');
+            
+            if(tool === 'camera') document.getElementById('camera-section').classList.remove('hidden');
+            if(tool === 'pdf') document.getElementById('pdf-section').classList.remove('hidden');
         }
 
-        // --- PDF PROCESSING LOGIC ---
-        const fileInput = document.getElementById('file-input');
+        // --- CAMERA & OCR LOGIC ---
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                const video = document.getElementById('video-feed');
+                video.srcObject = stream;
+                document.getElementById('camera-ui').style.display = 'block';
+                document.getElementById('start-cam-btn').style.display = 'none';
+            } catch (err) {
+                alert("Camera access denied or unavailable.");
+            }
+        }
 
-        fileInput.addEventListener('change', async (e) => {
+        function capturePage() {
+            const video = document.getElementById('video-feed');
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+
+            // Set canvas size to match video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Run Alchemy (OCR)
+            runOCR(canvas);
+        }
+
+        function runOCR(canvas) {
+            statusDisp.innerText = "EXTRACTING INK... (DO NOT MOVE)";
+            document.getElementById('progress-bar').style.width = "50%";
+
+            Tesseract.recognize(
+                canvas,
+                'eng',
+                { logger: m => console.log(m) }
+            ).then(({ data: { text } }) => {
+                pageCount++;
+                const cleanText = text.replace(/\n\s*\n/g, '\n'); // Remove extra empty lines
+                
+                // Append text to the textarea
+                const currentContent = document.getElementById('bookContent').value;
+                const separator = currentContent ? "\n\n" : "";
+                document.getElementById('bookContent').value = currentContent + separator + cleanText;
+
+                statusDisp.innerText = `PAGE ${pageCount} CAPTURED. READY FOR NEXT PAGE.`;
+                document.getElementById('progress-bar').style.width = "0%";
+            });
+        }
+
+        // --- PDF LOGIC ---
+        document.getElementById('file-input').addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
-
-            statusDisp.innerText = "ALCHEMIZING: " + file.name.toUpperCase();
             document.getElementById('bookTitle').value = file.name.replace('.pdf', '').toUpperCase();
-
+            
             const reader = new FileReader();
             reader.onload = async function() {
-                try {
-                    const typedarray = new Uint8Array(this.result);
-                    const pdf = await pdfjsLib.getDocument(typedarray).promise;
-                    let fullText = "";
-
-                    for (let i = 1; i <= pdf.numPages; i++) {
-                        const page = await pdf.getPage(i);
-                        const content = await page.getTextContent();
-                        const strings = content.items.map(item => item.str);
-                        fullText += strings.join(' ') + "\n\n";
-                    }
-                    
-                    document.getElementById('bookContent').value = fullText;
-                    statusDisp.innerText = "WISDOM EXTRACTED (" + pdf.numPages + " PAGES)";
-                } catch (err) {
-                    statusDisp.innerText = "ERROR: SCROLL PROTECTED OR INVALID";
+                const typedarray = new Uint8Array(this.result);
+                const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                let fullText = "";
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const content = await page.getTextContent();
+                    fullText += content.items.map(item => item.str).join(' ') + "\n\n";
                 }
+                document.getElementById('bookContent').value = fullText;
             };
             reader.readAsArrayBuffer(file);
         });
 
-        function forgeJSON() {
-            const title = document.getElementById('bookTitle').value;
-            const author = document.getElementById('bookAuthor').value || "ANONYMOUS";
-            const category = document.getElementById('bookCategory').value;
-            const text = document.getElementById('bookContent').value;
-
-            if(!title || !text || !category) {
-                alert("The Forge requires a Title, Category, and Content.");
-                return;
-            }
-
-            const bookObject = {
-                id: title.toLowerCase().replace(/\s+/g, '-') + "-" + Date.now(),
-                title: title.toUpperCase(),
-                author: author.toUpperCase(),
-                category: category,
-                content: text.split('\n\n').filter(p => p.trim() !== "").map(p => {
-                    return p.match(/[^.!?]+[.!?]+/g) || [p];
-                })
-            };
-
-            const output = document.getElementById('forgeOutput');
-            output.innerText = JSON.stringify(bookObject, null, 4) + ",";
-            output.style.display = "block";
-            window.scrollTo(0, document.body.scrollHeight);
-        }
-
+        // --- ARCHIVE LOGIC ---
         async function saveToArchive() {
             const title = document.getElementById('bookTitle').value;
-            const author = document.getElementById('bookAuthor').value || "ANONYMOUS";
+            const author = document.getElementById('bookAuthor').value || "Anonymous";
             const category = document.getElementById('bookCategory').value;
-            const text = document.getElementById('bookContent').value;
+            const content = document.getElementById('bookContent').value;
 
-            if(!title || !text || !category) {
-                alert("The Archive requires a Title, Category, and Content.");
-                return;
-            }
+            if(!title || !content || !category) return alert("The Scroll is incomplete.");
 
+            // Create book object compatible with reader.html
             const newBook = {
-                id: "vault-" + Date.now(),
+                id: "manual-" + Date.now(),
                 title: title.toUpperCase(),
                 author: author.toUpperCase(),
                 category: category,
-                content: text.split('\n\n').filter(p => p.trim() !== "").map(p => {
-                    return p.match(/[^.!?]+[.!?]+/g) || [p];
-                })
+                content: content, // Save as raw text, reader handles parsing
+                bookmarks: [],
+                lastPosition: { pIdx: 0, sIdx: 0 }
             };
 
-            try {
-                let library = await localforage.getItem('veridian_library') || [];
-                library.push(newBook);
-                await localforage.setItem('veridian_library', library);
-                const btn = document.getElementById('commit-btn');
-                btn.innerText = "ETCHED IN THE DEEP VAULT";
-                btn.style.background = "#D4AF37";
-                btn.style.color = "black";
-                setTimeout(() => window.location.href = 'index.html', 1200);
-            } catch (err) {
-                alert("The Deep Vault failed to store this scroll.");
+            let library = await localforage.getItem('veridian_library') || [];
+            library.push(newBook);
+            await localforage.setItem('veridian_library', library);
+            
+            const btn = document.getElementById('commit-btn');
+            btn.innerText = "INSCRIBED";
+            setTimeout(() => window.location.href = 'dashboard.html', 1000);
+        }
+
+        // --- ADMIN FORGE (Hidden) ---
+        const librarianKey = "veridian"; 
+        let inputBuffer = "";
+        
+        // Double tap title for mobile
+        let lastTap = 0;
+        document.getElementById('scriptorium-title').addEventListener('touchend', (e) => {
+            const now = new Date().getTime();
+            if (now - lastTap < 500) {
+                if(prompt("Enter Key:") === librarianKey) document.getElementById('admin-forge-btn').style.display='block';
             }
+            lastTap = now;
+        });
+        
+        // Keyboard for desktop
+        document.addEventListener('keydown', (e) => {
+            inputBuffer += e.key.toLowerCase();
+            if (inputBuffer.includes(librarianKey)) document.getElementById('admin-forge-btn').style.display='block';
+        });
+
+        function forgeJSON() {
+            const newBook = {
+                id: document.getElementById('bookTitle').value.toLowerCase().replace(/\s/g,'-'),
+                title: document.getElementById('bookTitle').value.toUpperCase(),
+                author: document.getElementById('bookAuthor').value.toUpperCase(),
+                category: document.getElementById('bookCategory').value,
+                content: document.getElementById('bookContent').value.split('\n\n')
+            };
+            const out = document.getElementById('forgeOutput');
+            out.classList.remove('hidden');
+            out.innerText = JSON.stringify(newBook, null, 4) + ",";
         }
     </script>
 </body>
