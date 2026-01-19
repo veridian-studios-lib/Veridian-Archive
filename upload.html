@@ -257,34 +257,50 @@
 
         // --- ARCHIVE LOGIC ---
         async function saveToArchive() {
-            const title = document.getElementById('bookTitle').value;
-            const author = document.getElementById('bookAuthor').value || "Anonymous";
-            const category = document.getElementById('bookCategory').value;
-            const content = document.getElementById('bookContent').value;
+    const title = document.getElementById('bookTitle').value;
+    const author = document.getElementById('bookAuthor').value || "Anonymous";
+    const category = document.getElementById('bookCategory').value;
+    const rawContent = document.getElementById('bookContent').value;
 
-            if(!title || !content || !category) return alert("The Scroll is incomplete.");
+    if(!title || !rawContent || !category) return alert("The Scroll is incomplete.");
 
-            const newBook = {
-                id: "manual-" + Date.now(),
-                title: title.toUpperCase(),
-                author: author.toUpperCase(),
-                category: category,
-                content: content, 
-                bookmarks: [],
-                lastPosition: { pIdx: 0, sIdx: 0 },
-                lastRead: Date.now()
-            };
+    // --- THE SANCTIFIER: This converts raw text into Reader-Ready Pages ---
+    const structuredContent = rawContent.split('\n\n')
+        .filter(p => p.trim() !== "")
+        .map(p => {
+            // This splits the paragraph into individual sentences
+            const sentences = p.match(/[^.!?]+[.!?]+|\S+/g) || [p];
+            return sentences.map(s => s.trim());
+        });
 
-            let library = await localforage.getItem('veridian_library') || [];
-            library.push(newBook);
-            await localforage.setItem('veridian_library', library);
-            
-            const btn = document.getElementById('commit-btn');
-            btn.innerText = "INSCRIBED";
-            btn.style.background = "green";
-            btn.style.color = "white";
-            setTimeout(() => window.location.href = 'dashboard.html', 1000);
+    const newBook = {
+        id: "manual-" + Date.now(),
+        title: title.toUpperCase(),
+        author: author.toUpperCase(),
+        category: category,
+        content: structuredContent, // Now an Array of Pages and Sentences
+        bookmarks: [],
+        lastPosition: { pIdx: 0, sIdx: 0 },
+        lastRead: Date.now()
+    };
+
+    try {
+        let library = await localforage.getItem('veridian_library') || [];
+        library.push(newBook);
+        await localforage.setItem('veridian_library', library);
+        
+        const btn = document.getElementById('commit-btn');
+        btn.innerText = "INSCRIBED IN VAULT";
+        btn.style.background = "#D4AF37";
+        btn.style.color = "black";
+        
+        setTimeout(() => window.location.href = 'dashboard.html', 1000);
+    } catch (err) {
+        console.error("Storage Error:", err);
+        alert("Alchemy Failed: Could not write to the Deep Vault.");
+    }
         }
+        
     </script>
 </body>
 </html>
