@@ -54,7 +54,6 @@
         #camera-ui { display: none; position: relative; margin-bottom: 20px; overflow: hidden; border-radius: 4px; border: 1px solid var(--gold); }
         video { width: 100%; display: block; }
         
-        /* The Crop Box Overlay */
         .crop-overlay {
             position: absolute; inset: 0;
             border: 2px solid rgba(212, 175, 55, 0.3);
@@ -62,15 +61,18 @@
             pointer-events: none;
         }
         .crop-guide {
-            width: 80%; height: 60%;
+            width: 90%; height: 75%;
             border: 2px solid var(--gold);
-            box-shadow: 0 0 0 1000px rgba(0,0,0,0.5); /* Dims the area outside the crop */
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.5);
             position: relative;
         }
-        .crop-guide::after {
-            content: "ALIGN TEXT HERE";
-            position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
-            color: var(--gold); font-size: 8px; letter-spacing: 2px;
+
+        /* --- FOCUS BUTTON --- */
+        .focus-btn {
+            position: absolute; top: 15px; right: 15px;
+            background: rgba(0,0,0,0.6); border: 1px solid var(--gold);
+            color: var(--gold); padding: 8px; border-radius: 4px;
+            font-size: 9px; letter-spacing: 1px; cursor: pointer; z-index: 40;
         }
 
         .snap-btn {
@@ -78,7 +80,6 @@
             background: var(--gold); color: black; border-radius: 50%; width: 60px; height: 60px;
             display: flex; align-items: center; justify-content: center; cursor: pointer;
             box-shadow: 0 0 15px var(--gold); border: 2px solid white; z-index: 30;
-            pointer-events: auto;
         }
 
         .lux-btn {
@@ -128,10 +129,9 @@
         </div>
 
         <div id="camera-section" class="input-group hidden">
-            <p class="text-[10px] uppercase tracking-widest opacity-60 mb-2">Optical Alchemy (OCR)</p>
-            
             <div id="camera-ui">
                 <video id="video-feed" autoplay playsinline></video>
+                <button onclick="triggerFocus()" class="focus-btn">AUTO-FOCUS</button>
                 <div class="crop-overlay">
                     <div class="crop-guide" id="crop-guide"></div>
                 </div>
@@ -156,9 +156,7 @@
             </div>
         </div>
 
-        <p class="text-[9px] opacity-40 mt-4 mb-1 uppercase tracking-widest">Scroll Content (Editable)</p>
         <textarea id="bookContent" rows="8" placeholder="The extracted wisdom will appear here..."></textarea>
-        
         <button class="lux-btn" id="commit-btn" onclick="saveToArchive()">COMMIT TO ARCHIVE</button>
     </div>
 
@@ -166,8 +164,8 @@
 
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-        
         let pageCount = 0;
+        let videoStream = null;
         const statusDisp = document.getElementById('ocr-status');
         const progBar = document.getElementById('progress-bar');
         const progContainer = document.getElementById('progress-container');
@@ -179,45 +177,74 @@
 
         async function startCamera() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'environment', focusMode: 'continuous' } 
+                videoStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 3840 }, 
+                        height: { ideal: 2160 }
+                    } 
                 });
-                document.getElementById('video-feed').srcObject = stream;
+                const video = document.getElementById('video-feed');
+                video.srcObject = videoStream;
                 document.getElementById('camera-ui').style.display = 'block';
                 document.getElementById('start-cam-btn').style.display = 'none';
-                statusDisp.innerText = "LENS PURIFIED. ALIGN TEXT IN BOX.";
-            } catch (err) {
-                alert("Alchemy requires camera access.");
+                
+                // Set default focus mode if supported
+                const track = videoStream.getVideoTracks()[0];
+                const capabilities = track.getCapabilities();
+                if (capabilities.focusMode) {
+                    track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+                }
+            } catch (err) { alert("Camera access denied."); }
+        }
+
+        /* --- FOCUS LOGIC --- */
+        async function triggerFocus() {
+            if (!videoStream) return;
+            const track = videoStream.getVideoTracks()[0];
+            const capabilities = track.getCapabilities();
+            
+            if (capabilities.focusMode) {
+                statusDisp.innerText = "REFOCUSING LENS...";
+                try {
+                    // Temporarily toggle focus to force a hardware reset
+                    await track.applyConstraints({ advanced: [{ focusMode: 'auto' }] });
+                    setTimeout(async () => {
+                        await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+                        statusDisp.innerText = "LENS SHARPENED.";
+                    }, 500);
+                } catch (e) {
+                    statusDisp.innerText = "MANUAL FOCUS NOT SUPPORTED BY BROWSER.";
+                }
+            } else {
+                statusDisp.innerText = "TAP SCREEN TO FOCUS MANUALLY.";
             }
         }
 
-        /* --- ENHANCED CAPTURE WITH CROPPING --- */
         function capturePage() {
             const video = document.getElementById('video-feed');
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d');
 
-            // Calculate Crop Coordinates (80% width, 60% height of the center)
-            const cropW = video.videoWidth * 0.8;
-            const cropH = video.videoHeight * 0.6;
+            const cropW = video.videoWidth * 0.9;
+            const cropH = video.videoHeight * 0.75;
             const startX = (video.videoWidth - cropW) / 2;
             const startY = (video.videoHeight - cropH) / 2;
 
-            canvas.width = cropW;
-            canvas.height = cropH;
+            // DIGITAL MAGNIFIER (2x Upscale)
+            const upscaleFactor = 2; 
+            canvas.width = cropW * upscaleFactor;
+            canvas.height = cropH * upscaleFactor;
 
-            // DRAW CROP TO CANVAS
-            ctx.drawImage(video, startX, startY, cropW, cropH, 0, 0, cropW, cropH);
+            ctx.drawImage(video, startX, startY, cropW, cropH, 0, 0, canvas.width, canvas.height);
 
-            // APPLY PURIFICATION FILTERS (Grayscale & High Contrast)
+            // ADAPTIVE ALCHEMY (Binarization)
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
             for (let i = 0; i < data.length; i += 4) {
-                const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-                const contrast = 1.5; // Boost contrast
-                const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
-                const newValue = factor * (avg - 128) + 128;
-                data[i] = data[i + 1] = data[i + 2] = newValue;
+                const brightness = (data[i] * 0.299) + (data[i + 1] * 0.587) + (data[i + 2] * 0.114);
+                const val = brightness > 128 ? 255 : 0; 
+                data[i] = data[i+1] = data[i+2] = val;
             }
             ctx.putImageData(imageData, 0, 0);
 
@@ -225,38 +252,28 @@
         }
 
         function runOCR(canvas) {
-            statusDisp.innerText = "EXTRACTING PURE INK...";
+            statusDisp.innerText = "EXTRACTING WISDOM...";
             progContainer.style.display = 'block';
-            progBar.style.width = "10%";
 
             Tesseract.recognize(canvas, 'eng', { 
                 logger: m => {
                     if (m.status === 'recognizing text') {
-                        statusDisp.innerText = `READING... ${(m.progress * 100).toFixed(0)}%`;
+                        statusDisp.innerText = `TRANSCRIBING: ${(m.progress * 100).toFixed(0)}%`;
                         progBar.style.width = `${m.progress * 100}%`;
                     }
-                }
+                },
+                tessedit_pageseg_mode: '1' 
             }).then(({ data: { text } }) => {
                 pageCount++;
-                
-                // --- CLEANING SCRIPT (Removes Alien Symbols) ---
-                const cleaned = text
-                    .replace(/[|\\/~_<>«»]/g, '') // Remove noise characters
-                    .replace(/\s\s+/g, ' ')       // Remove double spaces
-                    .trim();
-
+                const cleaned = text.replace(/[|\\/~_<>«»]/g, '').replace(/\s\s+/g, ' ').trim();
                 const current = document.getElementById('bookContent').value;
                 document.getElementById('bookContent').value = current + (current ? "\n\n" : "") + cleaned;
-
-                statusDisp.innerText = `PAGE ${pageCount} CAPTURED SUCCESSFULLY.`;
+                statusDisp.innerText = `PAGE ${pageCount} ETCHED.`;
                 progBar.style.width = "0%";
-                setTimeout(() => { progContainer.style.display = 'none'; }, 1000);
-            }).catch(err => {
-                statusDisp.innerText = "ALCHEMY FAILED. CHECK LIGHTING.";
-            });
+            }).catch(err => { statusDisp.innerText = "FAILED. TRY AGAIN."; });
         }
 
-        // --- PDF & SAVE LOGIC ---
+        // PDF and Archive logic
         document.getElementById('file-input').addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -281,10 +298,8 @@
             const author = document.getElementById('bookAuthor').value || "Unknown Author";
             const category = document.getElementById('bookCategory').value;
             const rawContent = document.getElementById('bookContent').value;
-
             if(!title || !rawContent || !category) return alert("Scroll is incomplete.");
 
-            // The Sanctifier (Splits into pages/sentences)
             const structuredContent = rawContent.split('\n\n').filter(p => p.trim() !== "").map(p => {
                 const sentences = p.match(/[^.!?]+[.!?]+|\S+/g) || [p];
                 return sentences.map(s => s.trim());
@@ -304,9 +319,7 @@
             let library = await localforage.getItem('veridian_library') || [];
             library.push(newBook);
             await localforage.setItem('veridian_library', library);
-            
-            document.getElementById('commit-btn').innerText = "ETCHED IN VAULT";
-            setTimeout(() => window.location.href = 'dashboard.html', 1000);
+            window.location.href = 'dashboard.html';
         }
     </script>
 </body>
