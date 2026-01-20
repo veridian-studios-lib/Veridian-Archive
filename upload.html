@@ -50,7 +50,7 @@
         input:focus, textarea:focus, select:focus { border-bottom-color: var(--gold); }
         select option { background: #1A140E; color: var(--gold); }
 
-        /* --- CAMERA & CROP UI --- */
+        /* --- CAMERA UI --- */
         #camera-ui { display: none; position: relative; margin-bottom: 20px; overflow: hidden; border-radius: 4px; border: 1px solid var(--gold); }
         video { width: 100%; display: block; }
         
@@ -67,7 +67,6 @@
             position: relative;
         }
 
-        /* --- FOCUS BUTTON --- */
         .focus-btn {
             position: absolute; top: 15px; right: 15px;
             background: rgba(0,0,0,0.6); border: 1px solid var(--gold);
@@ -96,7 +95,16 @@
         }
         #progress-bar { width: 0%; height: 100%; background: var(--gold); transition: width 0.3s; }
 
-        h1 { font-family: 'Cinzel', serif; letter-spacing: 0.4em; color: var(--gold); margin-bottom: 30px; }
+        /* The Secret Gate Title */
+        h1 { 
+            font-family: 'Cinzel', serif; letter-spacing: 0.4em; color: var(--gold); margin-bottom: 30px; 
+            cursor: pointer; user-select: none;
+        }
+        
+        .undo-link {
+            text-align: right; font-size: 10px; color: #EF4444; 
+            cursor: pointer; margin-top: -10px; margin-bottom: 15px; display: none;
+        }
     </style>
 </head>
 <body>
@@ -105,7 +113,7 @@
     <button onclick="window.location.href='dashboard.html'" class="fixed top-6 left-6 text-[#D4AF37] opacity-40 hover:opacity-100 uppercase text-[9px] tracking-[0.4em] z-[100] transition-all">← Dashboard</button>
 
     <div class="parchment-form">
-        <h1 class="text-center text-xl uppercase">The Scriptorium</h1>
+        <h1 id="scribe-title" class="text-center text-xl uppercase">The Scriptorium</h1>
 
         <input type="text" id="bookTitle" placeholder="TITLE OF THE WORK">
         <input type="text" id="bookAuthor" placeholder="NAME OF THE AUTHOR">
@@ -157,6 +165,8 @@
         </div>
 
         <textarea id="bookContent" rows="8" placeholder="The extracted wisdom will appear here..."></textarea>
+        <p id="undo-btn" class="undo-link" onclick="undoLastEntry()">[ UNDO LAST SCAN ]</p>
+        
         <button class="lux-btn" id="commit-btn" onclick="saveToArchive()">COMMIT TO ARCHIVE</button>
     </div>
 
@@ -165,10 +175,26 @@
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
         let pageCount = 0;
+        let lastScanLength = 0; // For undo functionality
         let videoStream = null;
         const statusDisp = document.getElementById('ocr-status');
         const progBar = document.getElementById('progress-bar');
         const progContainer = document.getElementById('progress-container');
+
+        // --- THE SECRET ADMIN GATE ---
+        let taps = 0;
+        document.getElementById('scribe-title').addEventListener('click', () => {
+            taps++;
+            setTimeout(() => taps = 0, 500); // Reset if not double tapped quickly
+            if(taps === 2) {
+                const pass = prompt("SPEAK THE WORDS OF POWER (Admin Password):");
+                if(pass === "veridian") {
+                    window.location.href = 'admin.html';
+                } else {
+                    alert("ACCESS DENIED.");
+                }
+            }
+        });
 
         function toggleTool(tool) {
             document.getElementById('camera-section').classList.toggle('hidden', tool !== 'camera');
@@ -178,46 +204,32 @@
         async function startCamera() {
             try {
                 videoStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: 'environment',
-                        width: { ideal: 3840 }, 
-                        height: { ideal: 2160 }
-                    } 
+                    video: { facingMode: 'environment', width: { ideal: 3840 }, height: { ideal: 2160 } } 
                 });
                 const video = document.getElementById('video-feed');
                 video.srcObject = videoStream;
                 document.getElementById('camera-ui').style.display = 'block';
                 document.getElementById('start-cam-btn').style.display = 'none';
                 
-                // Set default focus mode if supported
                 const track = videoStream.getVideoTracks()[0];
-                const capabilities = track.getCapabilities();
-                if (capabilities.focusMode) {
+                if (track.getCapabilities().focusMode) {
                     track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
                 }
             } catch (err) { alert("Camera access denied."); }
         }
 
-        /* --- FOCUS LOGIC --- */
         async function triggerFocus() {
             if (!videoStream) return;
             const track = videoStream.getVideoTracks()[0];
-            const capabilities = track.getCapabilities();
-            
-            if (capabilities.focusMode) {
-                statusDisp.innerText = "REFOCUSING LENS...";
+            if (track.getCapabilities().focusMode) {
+                statusDisp.innerText = "REFOCUSING...";
                 try {
-                    // Temporarily toggle focus to force a hardware reset
                     await track.applyConstraints({ advanced: [{ focusMode: 'auto' }] });
                     setTimeout(async () => {
                         await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
-                        statusDisp.innerText = "LENS SHARPENED.";
+                        statusDisp.innerText = "FOCUSED.";
                     }, 500);
-                } catch (e) {
-                    statusDisp.innerText = "MANUAL FOCUS NOT SUPPORTED BY BROWSER.";
-                }
-            } else {
-                statusDisp.innerText = "TAP SCREEN TO FOCUS MANUALLY.";
+                } catch (e) {}
             }
         }
 
@@ -231,20 +243,17 @@
             const startX = (video.videoWidth - cropW) / 2;
             const startY = (video.videoHeight - cropH) / 2;
 
-            // DIGITAL MAGNIFIER (2x Upscale)
-            const upscaleFactor = 2; 
-            canvas.width = cropW * upscaleFactor;
-            canvas.height = cropH * upscaleFactor;
+            canvas.width = cropW * 2; // Upscale 2x
+            canvas.height = cropH * 2;
 
             ctx.drawImage(video, startX, startY, cropW, cropH, 0, 0, canvas.width, canvas.height);
 
-            // ADAPTIVE ALCHEMY (Binarization)
+            // Binarization
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
             for (let i = 0; i < data.length; i += 4) {
                 const brightness = (data[i] * 0.299) + (data[i + 1] * 0.587) + (data[i + 2] * 0.114);
-                const val = brightness > 128 ? 255 : 0; 
-                data[i] = data[i+1] = data[i+2] = val;
+                data[i] = data[i+1] = data[i+2] = (brightness > 128 ? 255 : 0);
             }
             ctx.putImageData(imageData, 0, 0);
 
@@ -252,13 +261,13 @@
         }
 
         function runOCR(canvas) {
-            statusDisp.innerText = "EXTRACTING WISDOM...";
+            statusDisp.innerText = "READING...";
             progContainer.style.display = 'block';
 
             Tesseract.recognize(canvas, 'eng', { 
                 logger: m => {
                     if (m.status === 'recognizing text') {
-                        statusDisp.innerText = `TRANSCRIBING: ${(m.progress * 100).toFixed(0)}%`;
+                        statusDisp.innerText = `SCANNING: ${(m.progress * 100).toFixed(0)}%`;
                         progBar.style.width = `${m.progress * 100}%`;
                     }
                 },
@@ -266,14 +275,35 @@
             }).then(({ data: { text } }) => {
                 pageCount++;
                 const cleaned = text.replace(/[|\\/~_<>«»]/g, '').replace(/\s\s+/g, ' ').trim();
-                const current = document.getElementById('bookContent').value;
-                document.getElementById('bookContent').value = current + (current ? "\n\n" : "") + cleaned;
-                statusDisp.innerText = `PAGE ${pageCount} ETCHED.`;
+                
+                const textArea = document.getElementById('bookContent');
+                const current = textArea.value;
+                const newContent = (current ? "\n\n" : "") + cleaned;
+                
+                // Track length for Undo function
+                lastScanLength = cleaned.length + (current ? 2 : 0); // +2 for newlines
+                
+                textArea.value = current + (current ? "\n\n" : "") + cleaned;
+                document.getElementById('undo-btn').style.display = 'block';
+                
+                statusDisp.innerText = `PAGE ${pageCount} CAPTURED.`;
                 progBar.style.width = "0%";
-            }).catch(err => { statusDisp.innerText = "FAILED. TRY AGAIN."; });
+            }).catch(err => { statusDisp.innerText = "FAILED."; });
         }
 
-        // PDF and Archive logic
+        function undoLastEntry() {
+            const textArea = document.getElementById('bookContent');
+            const current = textArea.value;
+            if(lastScanLength > 0 && current.length >= lastScanLength) {
+                textArea.value = current.slice(0, -lastScanLength);
+                lastScanLength = 0;
+                document.getElementById('undo-btn').style.display = 'none';
+                pageCount--;
+                statusDisp.innerText = "LAST PAGE ERASED.";
+            }
+        }
+
+        // PDF & Save Logic
         document.getElementById('file-input').addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
