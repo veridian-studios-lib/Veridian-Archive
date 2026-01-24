@@ -72,15 +72,16 @@
     </footer>
 
     <script>
+        // --- 1. THE RENDER ENGINE ---
         async function renderBooks(books) {
             const grid = document.getElementById('library-grid');
             grid.innerHTML = '';
-            
-            // Get local library to check if already "Committed"
-            const localLibrary = await localforage.getItem('veridian_library') || [];
-            
+
+            // Get local vault to check if already "Inscribed"
+            const localLibrary = await localforage.getItem('veridian_1_library') || [];
+
             books.forEach(book => {
-                const isAlreadyStored = localLibrary.some(b => b.id === idSanitizer(book.id));
+                const isAlreadyStored = localLibrary.some(b => b.id === book.id);
                 const card = document.createElement('div');
                 card.className = 'book-card';
                 card.innerHTML = `
@@ -92,12 +93,19 @@
                         <h3 class="lux-serif text-md mt-1 font-bold leading-tight">${book.title}</h3>
                         <p class="text-[10px] italic opacity-60 mt-2">By ${book.author}</p>
                     </div>
-                    <div class="mt-auto flex justify-between items-center">
-                        <div class="text-[14px] opacity-30">🔖</div>
-                        <button id="btn-${idSanitizer(book.id)}" 
-                                onclick="commitToArchive('${idSanitizer(book.id)}')" 
-                                class="commit-btn" ${isAlreadyStored ? 'disabled' : ''}>
+                    
+                    <div class="mt-auto flex gap-2">
+                        <button id="btn-${book.id}" 
+                            onclick="commitToArchive('${book.id}')" 
+                            class="commit-btn flex-1 ${isAlreadyStored ? 'disabled' : ''}"
+                            ${isAlreadyStored ? 'disabled' : ''}>
                             ${isAlreadyStored ? 'INSCRIBED' : 'COMMIT'}
+                        </button>
+
+                        <button onclick="downloadBook('${book.id}')" 
+                            class="commit-btn flex-1" 
+                            style="border-color: rgba(212, 175, 55, 0.4);">
+                            DOWNLOAD
                         </button>
                     </div>
                 `;
@@ -105,13 +113,10 @@
             });
         }
 
-        // Simple helper to handle IDs with spaces or dots
-        function idSanitizer(id) {
-            return id.replace(/\s+/g, '-').toLowerCase();
-        }
-
+        // --- 2. SEARCH LOGIC ---
         function searchLibrary() {
             const query = document.getElementById('searchInput').value.toLowerCase();
+            // This uses GLOBAL_BOOKS from your global_library.js
             const filtered = GLOBAL_BOOKS.filter(b => 
                 b.title.toLowerCase().includes(query) || 
                 b.author.toLowerCase().includes(query) ||
@@ -120,8 +125,26 @@
             renderBooks(filtered);
         }
 
+        // --- 3. DOWNLOAD ENGINE ---
+        function downloadBook(bookId) {
+            const book = GLOBAL_BOOKS.find(b => b.id === bookId);
+            if (!book) return;
+
+            const dataStr = JSON.stringify(book, null, 4);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${book.title.replace(/\s+/g, '_')}_Veridian.json`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+
+        // --- 4. COMMIT TO VAULT LOGIC ---
         async function commitToArchive(id) {
-            const bookToCopy = GLOBAL_BOOKS.find(b => idSanitizer(b.id) === id);
+            const bookToCopy = GLOBAL_BOOKS.find(b => b.id === id);
             if (!bookToCopy) return;
 
             const btn = document.getElementById(`btn-${id}`);
@@ -129,25 +152,17 @@
             btn.innerText = "SCRIBING...";
 
             try {
-                let library = await localforage.getItem('veridian_library') || [];
-                
-                // Double check existence
-                if (library.some(b => idSanitizer(b.id) === id)) {
-                    btn.innerText = "INSCRIBED";
-                    btn.disabled = true;
-                    return;
+                let library = await localforage.getItem('veridian_1_library') || [];
+                if (!library.some(b => b.id === id)) {
+                    library.push(bookToCopy);
+                    await localforage.setItem('veridian_1_library', library);
                 }
                 
-                // Add to library
-                library.push(bookToCopy);
-                await localforage.setItem('veridian_library', library);
-                
-                // Success State
                 setTimeout(() => {
                     btn.innerText = "INSCRIBED";
                     btn.disabled = true;
+                    btn.classList.add('disabled');
                 }, 800);
-
             } catch (e) {
                 console.error("Archive failure", e);
                 btn.innerText = "FAILED";
@@ -155,7 +170,12 @@
             }
         }
 
-        window.onload = () => renderBooks(GLOBAL_BOOKS);
-    </script>
+        // --- INITIAL LOAD ---
+        window.onload = () => {
+            if (typeof GLOBAL_BOOKS !== 'undefined') {
+                renderBooks(GLOBAL_BOOKS);
+            }
+        };
+    </script> 
 </body>
 </html>
