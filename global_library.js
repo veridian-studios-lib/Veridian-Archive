@@ -1,16 +1,12 @@
 /**
  * VERIDIAN GLOBAL LIBRARY
- * This is the central repository for all scrolls available to the public.
- * * INSTRUCTIONS FOR THE LIBRARIAN:
- * 1. Use upload.html to "Forge" a new JSON block.
- * 2. Paste the generated block inside the GLOBAL_BOOKS array below.
- * 3. Ensure each book is separated by a comma.
+ * Central Repository
  */
 
-const GLOBAL_BOOKS = [
+const GREAT_LIBRARY = [
     {
         "id": "atomic-habits-01",
-        "title": "ATOMIC HABITS",
+        "title": "ATOMIC HABITS (SUMMARY)",
         "author": "JAMES CLEAR",
         "category": "Science",
         "content": [
@@ -20,147 +16,34 @@ const GLOBAL_BOOKS = [
     {
         "id": "meditations-01",
         "title": "MEDITATIONS",
-        "author": "MARCUS高度 AURELIUS",
+        "author": "MARCUS AURELIUS",
         "category": "Philosophy",
         "content": [
             ["You have power over your mind—not outside events.", "Realize this, and you will find strength."]
         ]
+    },
+    {
+        "id": "vault-1767691701730",
+        "title": "ATOMIC HABITS (FULL SCROLL)",
+        "author": "JAMES CLEAR",
+        "category": "Science",
+        "content": [
+            [
+                "AN IMPRINT OF PENGUIN RANDOM HOUSE LLC",
+                "Copyright © 2018 by James Clear",
+                "You are supporting writers and allowing Penguin to continue to publish books for every reader."
+            ],
+            [
+                "INTRODUCTION: My Story",
+                "On the final day of my sophomore year of high school, I was hit in the face with a baseball bat.",
+                "As my classmate took a full swing, the bat slipped out of his hands and came flying toward me before striking me directly between the eyes.",
+                "I have no memory of the moment of impact."
+            ],
+            [
+                "THE 1% RULE",
+                "It is so easy to overestimate the importance of one defining moment and underestimate the value of making small improvements on a daily basis.",
+                "If you can get 1 percent better each day for one year, you’ll end up thirty-seven times better by the time you’re done."
+            ]
+        ]
     }
-    // <--- PASTE NEW FORGED BLOCKS HERE --->
 ];
-
-{
-    "id": "vault-1767691701730",
-    "title": "ATOMIC-HABITS-PDF-DOWNLOAD",
-    "author": "JAMES CLEAR",
-    "category": "Science",
-    "content": [
-        [
-            "{\n    \"id\": \"vault-1767691701730\",\n    \"title\": \"ATOMIC-HABITS-PDF-DOWNLOAD\",\n    \"author\": \"JAMES CLEAR\",\n    \"category\": \"Science\",\n    \"content\": [\n        [\n            \"AN IMPRINT OF PENGUIN RANDOM HOUSE LLC 375 Hudson Street New York, New York 10014  Copyright © 2018 by James Clear Penguin supports copyright.",
-            "\",\n            \"Copyright fuels creativity, encourages diverse voices, promotes free speech, and creates a vibrant culture.",
-            "\",\n            \"Thank you for buying an authorized edition of this book and for complying with copyright laws by not reproducing, scanning, or distributing any part of it in any form without permission.",
-            "\",\n            \"You are supporting writers and allowing Penguin to continue to publish books for every reader.",
-            "\"\n        ],\n        [\n            \"Ebook ISBN 9780735211308  While the author has made every effort to provide accurate Internet addresses at the time of publication, neither the publisher nor the author assumes any responsibility for errors, or for changes that occur after publication.",
-            "\",\n            \"Further, the publisher does not have any control over and does not assume any responsibility for author or third-party websites or their content.",
-            "\"\n        ],\n        [\n            \"a·tom·ic  əˈ tämik  1.",
-            "\",\n            \"an extremely small amount of a thing; the single irreducible unit of a larger system.",
-            "\",\n            \"2.",
-            "\",\n            \"the source of immense energy or power.",
-            "\",\n            \"hab·it  ˈ hab ə t  1.",
-            "\",\n            \"a routine or practice performed regularly; an automatic response to a specific situation.",
-            "\"\n        ],\n        [\n            \"Contents\",\n            \"Title\",\n            \"Page\",\n            \"Copyright\",\n            \"Epigraph\",\n            \"Introduction:\",\n            \"My\",\n            \"Story\",\n            \"The\",\n            \"Fundamentals\",\n            \"Why\",\n            \"Tiny\",\n            \"Changes\",\n            \"Make\",\n            \"a\",\n            \"Big\",\n            \"Difference\",\n            \"1\",\n            \"The\",\n            \"Surprising\",\n            \"Power\",\n            \"of\",\n            \"Atomic\",\n            \"Habits\",\n            \"2\",\n            \"How\",\n            \"Your\",\n            \"Habits\",\n            \"Shape\",\n            \"Your\",\n            \"Identity\",\n            \"(and\",\n            \"Vice\",\n            \"Versa)\",\n            \"3\",\n            \"How\",\n            \"to\",\n            \"Build\",\n            \"Better\",\n            \"Habits\",\n            \"in\",\n            \"4\",\n            \"Simple\",\n            \"Steps\",\n            \"The\",\n            \"1st\",\n            \"Law\",\n            \"Make\",\n            \"It\",\n            \"Obvious\",\n            \"4\",\n            \"The\",\n            \"Man\",\n            \"Who\",\n            \"Didn’t\",\n            \"Look\",\n            \"Right\",\n            \"5\",\n            \"The\",\n            \"Best\",\n            \"Way\",\n            \"to\",\n            \"Start\",\n            \"a\",\n            \"New\",\n            \"Habit\",\n            \"6\",\n            \"Motivation\",\n            \"Is\",\n            \"Overrated;\",\n            \"Environment\",\n            \"Often\",\n            \"Matters\",\n            \"More\",\n            \"7\",\n            \"The\",\n            \"Secret\",\n            \"to\",\n            \"Self-Control\",\n            \"The\",\n            \"2nd\",\n            \"Law\",\n            \"Make\",\n            \"It\",\n            \"Attractive\",\n            \"8\",\n            \"How\",\n            \"to\",\n            \"Make\",\n            \"a\",\n            \"Habit\",\n            \"Irresistible\",\n            \"9\",\n            \"The\",\n            \"Role\",\n            \"of\",\n            \"Family\",\n            \"and\",\n            \"Friends\",\n            \"in\",\n            \"Shaping\",\n            \"Your\",\n            \"Habits\",\n            \"10\",\n            \"How\",\n            \"to\",\n            \"Find\",\n            \"and\",\n            \"Fix\",\n            \"the\",\n            \"Causes\",\n            \"of\",\n            \"Your\",\n            \"Bad\",\n            \"Habits\",\n            \"The\",\n            \"3rd\",\n            \"Law\",\n            \"Make\",\n            \"It\",\n            \"Easy\",\n            \"11\",\n            \"Walk\",\n            \"Slowly,\",\n            \"but\",\n            \"Never\",\n            \"Backward\",\n            \"12\",\n            \"The\",\n            \"Law\",\n            \"of\",\n            \"Least\",\n            \"Effort\",\n            \"13\",\n            \"How\",\n            \"to\",\n            \"Stop\",\n            \"Procrastinating\",\n            \"by\",\n            \"Using\",\n            \"the\",\n            \"Two-Minute\",\n            \"Rule\",\n            \"14\",\n            \"How\",\n            \"to\",\n            \"Make\",\n            \"Good\",\n            \"Habits\",\n            \"Inevitable\",\n            \"and\",\n            \"Bad\",\n            \"Habits\",\n            \"Impossible\"\n        ],\n        [\n            \"The 4th Law  Make It Satisfying  15 The Cardinal Rule of Behavior Change 16 How to Stick with Good Habits Every Day 17 How an Accountability Partner Can Change Everything  Advanced Tactics  How to Go from Being Merely Good to Being Truly Great  18 The Truth About Talent (When Genes Matter and When They Don’t) 19 The Goldilocks Rule: How to Stay Motivated in Life and Work 20 The Downside of Creating Good Habits Conclusion: The Secret to Results That Last  Appendix  What Should You Read Next?",
-            "\"\n        ],\n        [\n            \"Introduction  My Story  O N THE FINAL   day of my sophomore year of high school, I was hit in the face with a baseball bat.",
-            "\",\n            \"As my classmate took a full swing, the bat slipped out of his hands and came flying toward me before striking me directly between the eyes.",
-            "\",\n            \"I have no memory of the moment of impact.",
-            "\",\n            \"The bat smashed into my face with such force that it crushed my nose into a distorted U-shape.",
-            "\",\n            \"The collision sent the soft tissue of my brain slamming into the inside of my skull.",
-            "\",\n            \"Immediately, a wave of swelling surged throughout my head.",
-            "\",\n            \"In a fraction of a second, I had a broken nose, multiple skull fractures, and two shattered eye sockets.",
-            "\",\n            \"When I opened my eyes, I saw people staring at me and running over to help.",
-            "\",\n            \"I looked down and noticed spots of red on my clothes.",
-            "\",\n            \"One of my classmates took the shirt off his back and handed it to me.",
-            "\",\n            \"I used it to plug the stream of blood rushing from my broken nose.",
-            "\",\n            \"Shocked and confused, I was unaware of how seriously I had been injured.",
-            "\",\n            \"My teacher looped his arm around my shoulder and we began the long walk to the nurse’s office: across the field, down the hill, and back into school.",
-            "\",\n            \"Random hands touched my sides, holding me upright.",
-            "\",\n            \"We took our time and walked slowly.",
-            "\",\n            \"Nobody realized that every minute mattered.",
-            "\",\n            \"When we arrived at the nurse’s office, she asked me a series of questions.",
-            "\",\n            \"“What year is it?",
-            "\",\n            \"” “1998,” I answered.",
-            "\",\n            \"It was actually 2002.",
-            "\",\n            \"“Who is the president of the United States?",
-            "\",\n            \"” “Bill Clinton,” I said.",
-            "\",\n            \"The correct answer was George W.",
-            "\",\n            \"Bush.",
-            "\",\n            \"“What is your mom’s name?",
-            "\",\n            \"” “Uh.",
-            "\",\n            \"Um.",
-            "\",\n            \"” I stalled.",
-            "\",\n            \"Ten seconds passed.",
-            "\",\n            \"“Patti,” I said casually, ignoring the fact that it had taken me ten seconds to remember my own mother’s name.",
-            "\",\n            \"That is the last question I remember.",
-            "\",\n            \"My body was unable to handle the rapid swelling in my brain and I lost consciousness before the ambulance arrived.",
-            "\",\n            \"Minutes later, I was carried out of school and taken to the local hospital.",
-            "\",\n            \"Shortly after arriving, my body began shutting down.",
-            "\",\n            \"I struggled with basic functions like swallowing and breathing.",
-            "\",\n            \"I had my first seizure of the day.",
-            "\"\n        ],\n        [\n            \"stopped breathing entirely.",
-            "\",\n            \"As the doctors hurried to supply me with oxygen, they also decided the local hospital was unequipped to handle the situation and ordered a helicopter to fly me to a larger hospital in Cincinnati.",
-            "\",\n            \"I was rolled out of the emergency room doors and toward the helipad across the street.",
-            "\",\n            \"The stretcher rattled on a bumpy sidewalk as one nurse pushed me along while another pumped each breath into me by hand.",
-            "\",\n            \"My mother, who had arrived at the hospital a few moments before, climbed into the helicopter beside me.",
-            "\",\n            \"I remained unconscious and unable to breathe on my own as she held my hand during the flight.",
-            "\",\n            \"While my mother rode with me in the helicopter, my father went home to check on my brother and sister and break the news to them.",
-            "\",\n            \"He choked back tears as he explained to my sister that he would miss her eighth-grade graduation ceremony that night.",
-            "\",\n            \"After passing my siblings off to family and friends, he drove to Cincinnati to meet my mother.",
-            "\",\n            \"When my mom and I landed on the roof of the hospital, a team of nearly twenty doctors and nurses sprinted onto the helipad and wheeled me into the trauma unit.",
-            "\",\n            \"By this time, the swelling in my brain had become so severe that I was having repeated post-traumatic seizures.",
-            "\",\n            \"My broken bones needed to be fixed, but I was in no condition to undergo surgery.",
-            "\",\n            \"After yet another seizure— my third of the day—I was put into a medically induced coma and placed on a ventilator.",
-            "\",\n            \"My parents were no strangers to this hospital.",
-            "\",\n            \"Ten years earlier, they had entered the same building on the ground floor after my sister was diagnosed with leukemia at age three.",
-            "\",\n            \"I was five at the time.",
-            "\",\n            \"My brother was just six months old.",
-            "\",\n            \"After two and a half years of chemotherapy treatments, spinal taps, and bone marrow biopsies, my little sister finally walked out of the hospital happy, healthy, and cancer free.",
-            "\",\n            \"And now, after ten years of normal life, my parents found themselves back in the same place with a different child.",
-            "\",\n            \"While I slipped into a coma, the hospital sent a priest and a social worker to comfort my parents.",
-            "\",\n            \"It was the same priest who had met with them a decade earlier on the evening they found out my sister had cancer.",
-            "\",\n            \"As day faded into night, a series of machines kept me alive.",
-            "\",\n            \"My parents slept restlessly on a hospital mattress—one moment they would collapse from fatigue, the next they would be wide awake with worry.",
-            "\",\n            \"My mother would tell me later, “It was one of the worst nights I’ve ever had.",
-            "\"\n        ],\n        [\n            \"Mercifully, by the next morning my breathing had rebounded to the point where the doctors felt comfortable releasing me from the coma.",
-            "\",\n            \"When I finally regained consciousness, I discovered that I had lost my ability to smell.",
-            "\",\n            \"As a test, a nurse asked me to blow my nose and sniff an apple juice box.",
-            "\",\n            \"My sense of smell returned, but—to everyone’s surprise—the act of blowing my nose forced air through the fractures in my eye socket and pushed my left eye outward.",
-            "\",\n            \"My eyeball bulged out of the socket, held precariously in place by my eyelid and the optic nerve attaching my eye to my brain.",
-            "\",\n            \"The ophthalmologist said my eye would gradually slide back into place as the air seeped out, but it was hard to tell how long this would take.",
-            "\",\n            \"I was scheduled for surgery one week later, which would allow me some additional time to heal.",
-            "\",\n            \"I looked like I had been on the wrong end of a boxing match, but I was cleared to leave the hospital.",
-            "\",\n            \"I returned home with a broken nose, half a dozen facial fractures, and a bulging left eye.",
-            "\",\n            \"The following months were hard.",
-            "\",\n            \"It felt like everything in my life was on pause.",
-            "\",\n            \"I had double vision for weeks; I literally couldn’t see straight.",
-            "\",\n            \"It took more than a month, but my eyeball did eventually return to its normal location.",
-            "\",\n            \"Between the seizures and my vision problems, it was eight months before I could drive a car again.",
-            "\",\n            \"At physical therapy, I practiced basic motor patterns like walking in a straight line.",
-            "\",\n            \"I was determined not to let my injury get me down, but there were more than a few moments when I felt depressed and overwhelmed.",
-            "\",\n            \"I became painfully aware of how far I had to go when I returned to the baseball field one year later.",
-            "\",\n            \"Baseball had always been a major part of my life.",
-            "\",\n            \"My dad had played minor league baseball for the St.",
-            "\",\n            \"Louis Cardinals, and I had a dream of playing professionally, too.",
-            "\",\n            \"After months of rehabilitation, what I wanted more than anything was to get back on the field.",
-            "\",\n            \"But my return to baseball was not smooth.",
-            "\",\n            \"When the season rolled around, I was the only junior to be cut from the varsity baseball team.",
-            "\",\n            \"I was sent down to play with the sophomores on junior varsity.",
-            "\",\n            \"I had been playing since age four, and for someone who had spent so much time and effort on the sport, getting cut was humiliating.",
-            "\",\n            \"I vividly remember the day it happened.",
-            "\",\n            \"I sat in my car and cried as I flipped through the radio, desperately searching for a song that would make me feel better.",
-            "\",\n            \"After a year of self-doubt, I managed to make the varsity team as a senior, but I rarely made it on the field.",
-            "\",\n            \"In total, I played eleven innings of high school varsity baseball, barely more than a single game.",
-            "\",\n            \"Despite my lackluster high school career, I still believed I could become a great player.",
-            "\",\n            \"And I knew that if things were going to improve, I was the one responsible for making it happen.",
-            "\"\n        ],\n        [\n            \"injury, when I began college at Denison University.",
-            "\",\n            \"It was a new beginning, and it was the place where I would discover the surprising power of small habits for the first time.",
-            "\",\n            \"HOW I LEARNED ABOUT HABITS  Attending Denison was one of the best decisions of my life.",
-            "\",\n            \"I earned a spot on the baseball team and, although I was at the bottom of the roster as a freshman, I was thrilled.",
-            "\",\n            \"Despite the chaos of my high school years, I had managed to become a college athlete.",
-            "\",\n            \"I wasn’t going to be starting on the baseball team anytime soon, so I focused on getting my life in order.",
-            "\",\n            \"While my peers stayed up late and played video games, I built good sleep habits and went to bed early each night.",
-            "\",\n            \"In the messy world of a college dorm, I made a point to keep my room neat and tidy.",
-            "\",\n            \"These improvements were minor, but they gave me a sense of control over my life.",
-            "\",\n            \"I started to feel confident again.",
-            "\",\n            \"And this growing belief in myself rippled into the classroom as I improved my study habits and managed to earn straight A’s during my first year.",
-            "\",\n            \"A habit is a routine or behavior that is performed regularly—and, in many cases,   automatically.",
-            "\",\n            \"As   each   semester   passed,   I   accumulated   small   but consistent habits that ultimately led to results that were unimaginable to me when I started.",
-            "\",\n            \"For example, for the first time in my life, I made it a habit to lift weights multiple times per week, and in the years that followed, my six-foot- four-inch frame bulked up from a featherweight 170 to a lean 200 pounds.",
-            "\",\n            \"When my sophomore season arrived, I earned a starting role on the pitching staff.",
-            "\",\n            \"By my junior year, I was voted team captain and at the end of the season, I was selected for the all-conference team.",
-            "\",\n            \"But it was not until my senior season that my sleep habits, study habits, and strength-training habits really began to pay off.",
-            "\",\n            \"Six years after I had been hit in the face with a baseball bat, flown to the hospital, and placed into a coma, I was selected as the top male athlete at Denison University and named to the ESPN Academic All-America Team—an honor given to just thirty-three players across the country.",
-            "\",\n            \"By the time I graduated, I was listed in the school record books in eight different categories.",
-            "\",\n            \"That same year, I was awarded the university’s highest academic honor, the President’s Medal.",
-            "\",\n            \"I hope you’ll forgive me if this sounds boastful.",
-            "\",\n            \"To be honest, there was nothing legendary or historic about my athletic career.",
-            "\"\n        ],\n        [\n            \"professionally.",
-            "\"
