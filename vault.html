@@ -15,18 +15,18 @@
         }
         .lux-serif { font-family: 'Cinzel', serif; letter-spacing: 0.2em; }
         
-        /* THE GLOWING CATEGORY HEADERS */
+        /* CATEGORY HEADERS */
         .category-section { margin-bottom: 50px; }
         .category-title { 
             border-bottom: 1px solid rgba(212, 175, 55, 0.4); 
             padding-bottom: 12px; margin-bottom: 25px;
             font-size: 0.85rem; 
             color: var(--gold);
-            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5); /* The Glow */
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
             font-weight: bold;
-            opacity: 1; /* Made fully visible */
         }
 
+        /* SCROLL ITEM */
         .scroll-item {
             background: #1A140E; border: 1px solid rgba(212, 175, 55, 0.15);
             padding: 22px; border-radius: 8px; margin-bottom: 15px;
@@ -34,99 +34,177 @@
             transition: 0.3s;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
-        
-        .scroll-item h3 {
-            text-shadow: 0 0 5px rgba(212, 175, 55, 0.2);
-        }
-
         .scroll-item:hover { 
             border-color: var(--gold); 
             box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
             transform: scale(1.01);
         }
         
-        .delete-btn {
-            color: #ff4444; font-size: 0.7rem; letter-spacing: 0.1em;
-            cursor: pointer; opacity: 0.6; transition: 0.3s;
-            padding: 10px 15px; border: 1px solid rgba(255, 68, 68, 0.3); border-radius: 4px;
-            background: rgba(0,0,0,0.3);
+        /* BUTTONS */
+        .action-btn {
+            font-size: 0.7rem; letter-spacing: 0.1em; cursor: pointer; opacity: 0.6; transition: 0.3s;
+            padding: 8px 12px; border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 4px;
+            background: transparent; color: var(--gold); margin-left: 10px;
         }
-        .delete-btn:hover { 
-            opacity: 1; 
-            background: rgba(255, 68, 68, 0.15); 
-            border-color: #ff4444;
-            box-shadow: 0 0 10px rgba(255, 68, 68, 0.3);
-        }
+        .action-btn:hover { opacity: 1; background: rgba(212, 175, 55, 0.1); border-color: var(--gold); }
+
+        .delete-btn { color: #ff4444; border-color: rgba(255, 68, 68, 0.3); }
+        .delete-btn:hover { background: rgba(255, 68, 68, 0.15); border-color: #ff4444; color: white; }
         
         .empty-msg { opacity: 0.3; font-style: italic; font-size: 0.8rem; padding: 10px; }
+
+        /* READ MODAL */
+        #readModal { backdrop-filter: blur(5px); }
     </style>
 </head>
-<body class="max-w-2xl mx-auto">
+<body class="max-w-3xl mx-auto">
 
     <header class="py-10 flex justify-between items-center border-b border-gold/10 mb-8">
         <div>
             <button onclick="window.location.href='dashboard.html'" class="text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-all cursor-pointer">← Back to Dashboard</button>
             <h1 class="lux-serif text-3xl mt-2" style="text-shadow: 0 0 15px rgba(212, 175, 55, 0.3);">THE VAULT</h1>
         </div>
-        <div class="text-4xl opacity-20">🏛️</div>
+        <div class="text-right">
+            <div class="text-3xl opacity-20">🏛️</div>
+            <p id="total-count" class="text-[9px] opacity-40 mt-1">0 SCROLLS</p>
+        </div>
     </header>
 
     <div id="vault-content"></div>
 
+    <div id="readModal" class="fixed inset-0 bg-black/95 hidden z-50 p-4 overflow-y-auto">
+        <div class="max-w-2xl mx-auto mt-10 mb-20">
+            <div class="flex justify-between items-center mb-10 border-b border-[#D4AF37]/30 pb-4">
+                <h2 class="lux-serif text-xl">READING SCROLL</h2>
+                <button onclick="closeReader()" class="text-white opacity-50 hover:opacity-100 text-sm tracking-widest">✕ CLOSE</button>
+            </div>
+            <div id="modalContent" class="text-gray-300 leading-loose text-lg font-serif"></div>
+        </div>
+    </div>
+
     <script>
-        const categories = ["Philosophy", "History", "Science", "Documents", "Other", "Uncategorized"];
+        const categories = ["Science", "Philosophy", "History", "Documents", "Other"];
 
         async function manifestVault() {
             const vaultContent = document.getElementById('vault-content');
-            const library = await localforage.getItem('veridian_library') || [];
             
+            // --- FIX IS HERE: UPDATED TO 'veridian_1_library' ---
+            const library = await localforage.getItem('veridian_1_library') || [];
+            
+            document.getElementById('total-count').innerText = library.length + " SCROLLS";
             vaultContent.innerHTML = ''; 
 
+            if (library.length === 0) {
+                vaultContent.innerHTML = `
+                    <div class="text-center opacity-40 mt-20">
+                        <p class="lux-serif mb-4">The Vault is Empty</p>
+                        <a href="discovery.html" class="border border-[#D4AF37] px-4 py-2 text-xs hover:bg-[#D4AF37] hover:text-black transition">GO TO DISCOVERY</a>
+                    </div>`;
+                return;
+            }
+
             categories.forEach(cat => {
-                const filteredBooks = library.filter(book => {
-                    if (cat === "Uncategorized") {
-                        return !book.category || book.category === "Uncategorized";
-                    }
-                    return book.category === cat;
-                });
+                const filteredBooks = library.filter(book => (book.category || "Other") === cat);
 
-                const section = document.createElement('div');
-                section.className = 'category-section';
-                
-                section.innerHTML = `
-                    <h2 class="category-title lux-serif uppercase">${cat}</h2>
-                    <div id="list-${cat}"></div>
-                `;
-                
-                vaultContent.appendChild(section);
-                const listContainer = document.getElementById(`list-${cat}`);
+                // Only show category if it has books
+                if (filteredBooks.length > 0) {
+                    const section = document.createElement('div');
+                    section.className = 'category-section';
+                    
+                    section.innerHTML = `
+                        <h2 class="category-title lux-serif uppercase">${cat}</h2>
+                        <div id="list-${cat}"></div>
+                    `;
+                    vaultContent.appendChild(section);
+                    
+                    const listContainer = document.getElementById(`list-${cat}`);
 
-                if (filteredBooks.length === 0) {
-                    listContainer.innerHTML = `<p class="empty-msg text-white/20">This wing of the vault is currently empty...</p>`;
-                } else {
                     filteredBooks.forEach(book => {
+                        // Create safe ID for buttons
+                        const safeTitle = book.title.replace(/'/g, "\\'");
+                        
                         const item = document.createElement('div');
                         item.className = 'scroll-item';
                         item.innerHTML = `
-                            <div onclick="window.location.href='reader.html?id=${book.id}'" class="flex-1 cursor-pointer">
+                            <div class="flex-1">
                                 <h3 class="text-sm font-bold uppercase tracking-wider">${book.title}</h3>
                                 <p class="text-[10px] opacity-60 mt-1">SCRIBE: ${book.author}</p>
                             </div>
-                            <button class="delete-btn lux-serif" onclick="obliterateScroll('${book.id}')">OBLITERATE</button>
+                            <div class="flex items-center">
+                                <button class="action-btn" onclick="openReader('${safeTitle}')">READ</button>
+                                <button class="action-btn" onclick="downloadJSON('${safeTitle}')">⇩</button>
+                                <button class="action-btn delete-btn" onclick="obliterateScroll('${safeTitle}')">✕</button>
+                            </div>
                         `;
                         listContainer.appendChild(item);
                     });
                 }
             });
+            
+            // Handle uncategorized items
+            const others = library.filter(book => !categories.includes(book.category));
+            if (others.length > 0) {
+                // (Optional: You can add logic here to render "Uncategorized" if you wish)
+            }
         }
 
-        async function obliterateScroll(bookId) {
-            if (confirm("Are you sure you wish to erase this scroll from the archive forever?")) {
-                let library = await localforage.getItem('veridian_library') || [];
-                library = library.filter(book => book.id !== bookId);
-                await localforage.setItem('veridian_library', library);
-                manifestVault();
+        // --- 1. READER ENGINE ---
+        async function openReader(title) {
+            const library = await localforage.getItem('veridian_1_library');
+            const book = library.find(b => b.title === title);
+            if (!book) return;
+
+            const modal = document.getElementById('readModal');
+            const contentDiv = document.getElementById('modalContent');
+            
+            let htmlContent = `<h1 class="text-3xl text-[#D4AF37] mb-8 font-serif text-center uppercase">${book.title}</h1>`;
+            
+            if (Array.isArray(book.content)) {
+                book.content.forEach(section => {
+                    if (Array.isArray(section)) {
+                        section.forEach(p => htmlContent += `<p class="mb-6 opacity-90">${p}</p>`);
+                        htmlContent += `<div class="h-[1px] bg-[#D4AF37] opacity-20 w-1/2 mx-auto my-8"></div>`;
+                    }
+                });
+            } else {
+                htmlContent += `<p>${book.content || 'Content corrupted.'}</p>`;
             }
+
+            contentDiv.innerHTML = htmlContent;
+            modal.classList.remove('hidden');
+        }
+
+        function closeReader() {
+            document.getElementById('readModal').classList.add('hidden');
+        }
+
+        // --- 2. DELETE ENGINE ---
+        async function obliterateScroll(title) {
+            if (confirm("Permanently remove this scroll from your archive?")) {
+                let library = await localforage.getItem('veridian_1_library') || [];
+                // Filter OUT the book with the matching title
+                library = library.filter(book => book.title !== title);
+                await localforage.setItem('veridian_1_library', library);
+                manifestVault(); // Refresh page
+            }
+        }
+
+        // --- 3. DOWNLOAD ENGINE ---
+        async function downloadJSON(title) {
+            let library = await localforage.getItem('veridian_1_library');
+            const book = library.find(b => b.title === title);
+            if (!book) return;
+
+            const dataStr = JSON.stringify(book, null, 4);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = book.title.replace(/\s+/g, '_') + "_Veridian.json";
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
         }
 
         window.onload = manifestVault;
