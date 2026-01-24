@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Veridian | Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="global_library.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #D4AF37; --bg: #0F0A05; --card: #1A140E; --text: #D4AF37; }
@@ -17,14 +19,23 @@
             padding: 25px; border-radius: 8px; margin-bottom: 15px;
             cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: space-between;
         }
-        .menu-item:hover { border-color: var(--gold); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
+        .menu-item:hover { border-color: var(--gold); transform: translateY(-2px); }
         
+        /* Great Library Card Styling */
+        .library-card {
+            background: rgba(255,255,255,0.03); border-left: 2px solid var(--gold);
+            padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
+        }
+
         .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; inset: 0; background-color: #333; transition: .4s; border-radius: 34px; border: 1px solid var(--gold); }
         .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 3px; background-color: var(--gold); transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--gold); }
         input:checked + .slider:before { transform: translateX(26px); background-color: var(--bg); }
+        
+        .download-btn { font-size: 10px; border: 1px solid var(--gold); padding: 5px 10px; color: var(--gold); text-transform: uppercase; border-radius: 4px; }
+        .download-btn:hover { background: var(--gold); color: black; }
     </style>
 </head>
 <body class="p-8 max-w-2xl mx-auto">
@@ -33,13 +44,13 @@
         <h1 class="lux-serif text-2xl mt-4">ARCHIVE MODES</h1>
     </header>
 
-    <div class="menu-item" onclick="window.location.href='discovery.html'">
-        <div>
-            <h2 class="lux-serif text-sm">THE GREAT LIBRARY</h2>
-            <p class="text-[10px] opacity-60">Discover new scrolls added by the Librarian</p>
-        </div>
-        <span class="text-xl">🏛️</span>
+    <div class="mb-10">
+        <h2 class="lux-serif text-[12px] opacity-40 mb-4 tracking-[0.4em]">The Great Library</h2>
+        <div id="global-list">
+            </div>
     </div>
+
+    <hr class="border-t border-[#D4AF37]/10 mb-10">
 
     <div class="menu-item" onclick="window.location.href='history.html'">
         <div>
@@ -49,28 +60,12 @@
         <span class="text-xl">📜</span>
     </div>
 
-    <div class="menu-item" onclick="window.location.href='starred.html'">
-        <div>
-            <h2 class="lux-serif text-sm">STARRED</h2>
-            <p class="text-[10px] opacity-60">Sacred favorites</p>
-        </div>
-        <span class="text-xl">⭐</span>
-    </div>
-
     <div class="menu-item" onclick="window.location.href='vault.html'">
         <div>
-            <h2 class="lux-serif text-sm">BOOKS & DOCS</h2>
+            <h2 class="lux-serif text-sm">PERSONAL VAULT</h2>
             <p class="text-[10px] opacity-60">Your personal collection</p>
         </div>
         <span class="text-xl">📚</span>
-    </div>
-
-    <div class="menu-item" onclick="window.location.href='goals.html'">
-        <div>
-            <h2 class="lux-serif text-sm">THE MANIFEST</h2>
-            <p class="text-[10px] opacity-60">Future goals & reading rituals</p>
-        </div>
-        <span class="text-xl">⚖️</span>
     </div>
 
     <div class="menu-item">
@@ -85,6 +80,52 @@
     </div>
 
     <script>
+        // --- THE LIBRARY LOADER ---
+        function loadGreatLibrary() {
+            const list = document.getElementById('global-list');
+            
+            // Assuming your global_library.js defines: const GREAT_LIBRARY = [...]
+            if (typeof GREAT_LIBRARY !== 'undefined') {
+                GREAT_LIBRARY.forEach(book => {
+                    const card = document.createElement('div');
+                    card.className = 'library-card';
+                    card.innerHTML = `
+                        <div>
+                            <h3 class="lux-serif text-[11px]">${book.title}</h3>
+                            <p class="text-[9px] opacity-50">${book.author} | ${book.category}</p>
+                        </div>
+                        <button onclick="downloadBook('${book.id}')" class="download-btn">Download</button>
+                    `;
+                    list.appendChild(card);
+                });
+            } else {
+                list.innerHTML = `<p class="text-[10px] opacity-50 italic">The global library is currently sealed...</p>`;
+            }
+        }
+
+        // --- THE DOWNLOAD ENGINE ---
+        function downloadBook(bookId) {
+            const book = GREAT_LIBRARY.find(b => b.id === bookId);
+            if (!book) return;
+
+            // Convert book object to string
+            const dataStr = JSON.stringify(book, null, 4);
+            // Create a Blob (Binary Large Object)
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            // Create a temporary hidden link to trigger the download
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${book.title.replace(/\s+/g, '_')}_Veridian.json`;
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            alert(`${book.title} has been downloaded to your device.`);
+        }
+
         function toggleTheme() {
             document.body.classList.toggle('light-mode');
             const isLight = document.body.classList.contains('light-mode');
@@ -93,6 +134,7 @@
         }
 
         window.onload = () => {
+            loadGreatLibrary();
             if(localStorage.getItem('veridian-theme') === 'light') {
                 document.body.classList.add('light-mode');
                 document.getElementById('theme-toggle').checked = true;
