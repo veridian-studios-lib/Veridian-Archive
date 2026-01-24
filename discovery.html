@@ -71,38 +71,49 @@
         <p class="text-[9px] opacity-30 mt-8">LINKING TO PROJECT GUTENBERG</p>
     </footer>
 
-    <script>
-        // --- 1. THE RENDER ENGINE ---
+        <script>
+        // --- 1. RENDER ENGINE ---
+        // This function builds the visual cards for the books found in your library file
         async function renderBooks(books) {
             const grid = document.getElementById('library-grid');
-            grid.innerHTML = '';
+            if (!grid) return;
+            grid.innerHTML = ''; 
 
-            // Get local vault to check if already "Inscribed"
-            const localLibrary = await localforage.getItem('veridian_1_library') || [];
+            // Connect to the local vault to see what the user already has
+            let localLibrary = [];
+            try {
+                localLibrary = await localforage.getItem('veridian_1_library') || [];
+            } catch(e) { 
+                console.log("Vault currently empty."); 
+            }
 
             books.forEach(book => {
-                const isAlreadyStored = localLibrary.some(b => b.id === book.id);
+                // Check if book exists in vault by comparing titles
+                const isAlreadyStored = localLibrary.some(b => b.title === book.title);
+                // Create a clean ID for the buttons by removing spaces from the title
+                const cleanId = book.title.replace(/\s+/g, '');
+                
                 const card = document.createElement('div');
                 card.className = 'book-card';
                 card.innerHTML = `
                     <div class="mb-6">
                         <div class="flex justify-between items-start">
-                            <p class="text-[8px] opacity-40 uppercase tracking-widest mb-2">${book.category || 'General'}</p>
-                            <p class="text-[8px] opacity-40 font-mono">${book.pages || '???'} PGS</p>
+                            <p class="text-[8px] opacity-40 uppercase tracking-widest mb-2">${book.category || 'Scroll'}</p>
+                            <p class="text-[8px] opacity-40 font-mono italic">FORGED</p>
                         </div>
                         <h3 class="lux-serif text-md mt-1 font-bold leading-tight">${book.title}</h3>
-                        <p class="text-[10px] italic opacity-60 mt-2">By ${book.author}</p>
+                        <p class="text-[10px] italic opacity-60 mt-2">By ${book.author || 'The Librarian'}</p>
                     </div>
                     
                     <div class="mt-auto flex gap-2">
-                        <button id="btn-${book.id}" 
-                            onclick="commitToArchive('${book.id}')" 
+                        <button id="btn-${cleanId}" 
+                            onclick="commitToArchive('${book.title.replace(/'/g, "\\'")}')" 
                             class="commit-btn flex-1 ${isAlreadyStored ? 'disabled' : ''}"
                             ${isAlreadyStored ? 'disabled' : ''}>
                             ${isAlreadyStored ? 'INSCRIBED' : 'COMMIT'}
                         </button>
 
-                        <button onclick="downloadBook('${book.id}')" 
+                        <button onclick="downloadBook('${book.title.replace(/'/g, "\\'")}')" 
                             class="commit-btn flex-1" 
                             style="border-color: rgba(212, 175, 55, 0.4);">
                             DOWNLOAD
@@ -113,21 +124,23 @@
             });
         }
 
-        // --- 2. SEARCH LOGIC ---
+        // --- 2. SEARCH ENGINE ---
+        // Filters the GREAT_LIBRARY variable based on user input
         function searchLibrary() {
             const query = document.getElementById('searchInput').value.toLowerCase();
-            // This uses GLOBAL_BOOKS from your global_library.js
-            const filtered = GLOBAL_BOOKS.filter(b => 
-                b.title.toLowerCase().includes(query) || 
-                b.author.toLowerCase().includes(query) ||
-                (b.category && b.category.toLowerCase().includes(query))
-            );
-            renderBooks(filtered);
+            if (typeof GREAT_LIBRARY !== 'undefined') {
+                const filtered = GREAT_LIBRARY.filter(b => 
+                    b.title.toLowerCase().includes(query) || 
+                    b.author.toLowerCase().includes(query)
+                );
+                renderBooks(filtered);
+            }
         }
 
-        // --- 3. DOWNLOAD ENGINE ---
-        function downloadBook(bookId) {
-            const book = GLOBAL_BOOKS.find(b => b.id === bookId);
+        // --- 3. DOWNLOAD SYSTEM ---
+        // Creates a physical .json file for the user to keep
+        function downloadBook(title) {
+            const book = GREAT_LIBRARY.find(b => b.title === title);
             if (!book) return;
 
             const dataStr = JSON.stringify(book, null, 4);
@@ -135,47 +148,44 @@
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${book.title.replace(/\s+/g, '_')}_Veridian.json`;
+            a.download = title.replace(/\s+/g, '_') + "_Veridian.json";
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
         }
 
-        // --- 4. COMMIT TO VAULT LOGIC ---
-        async function commitToArchive(id) {
-            const bookToCopy = GLOBAL_BOOKS.find(b => b.id === id);
-            if (!bookToCopy) return;
-
-            const btn = document.getElementById(`btn-${id}`);
-            const originalText = btn.innerText;
-            btn.innerText = "SCRIBING...";
+        // --- 4. VAULT SYSTEM ---
+        // Saves the data to the browser's local storage (LocalForage)
+        async function commitToArchive(title) {
+            const bookToCopy = GREAT_LIBRARY.find(b => b.title === title);
+            const cleanId = title.replace(/\s+/g, '');
+            const btn = document.getElementById("btn-" + cleanId);
 
             try {
                 let library = await localforage.getItem('veridian_1_library') || [];
-                if (!library.some(b => b.id === id)) {
+                if (!library.some(b => b.title === title)) {
                     library.push(bookToCopy);
                     await localforage.setItem('veridian_1_library', library);
                 }
-                
-                setTimeout(() => {
-                    btn.innerText = "INSCRIBED";
-                    btn.disabled = true;
-                    btn.classList.add('disabled');
-                }, 800);
+                btn.innerText = "INSCRIBED";
+                btn.disabled = true;
+                btn.classList.add('disabled');
             } catch (e) {
-                console.error("Archive failure", e);
-                btn.innerText = "FAILED";
-                setTimeout(() => { btn.innerText = originalText; }, 2000);
+                console.error("Vault entry failed.");
             }
         }
 
-        // --- INITIAL LOAD ---
+        // --- 5. INITIALIZATION ---
+        // Runs as soon as the window finishes loading
         window.onload = () => {
-            if (typeof GLOBAL_BOOKS !== 'undefined') {
-                renderBooks(GLOBAL_BOOKS);
+            if (typeof GREAT_LIBRARY !== 'undefined') {
+                console.log("Success: Archive Loaded.");
+                renderBooks(GREAT_LIBRARY);
+            } else {
+                console.error("Error: Variable 'GREAT_LIBRARY' not detected. Check your filename!");
             }
         };
-    </script> 
+    </script>
 </body>
 </html>
