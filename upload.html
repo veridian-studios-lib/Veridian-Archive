@@ -346,9 +346,10 @@
                 lastRead: Date.now()
             };
 
-            let library = await localforage.getItem('veridian_library') || [];
-            library.push(newBook);
-            await localforage.setItem('veridian_library', library);
+            // FIXED: We now point to 'veridian_1_library' so the Vault can see it
+let library = await localforage.getItem('veridian_1_library') || [];
+library.push(newBook);
+await localforage.setItem('veridian_1_library', library);
             window.location.href = 'dashboard.html';
         }
     </script>
