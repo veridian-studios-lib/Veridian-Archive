@@ -3,162 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Veridian | The Archive</title>
+    <title>Veridian | The Master Archive</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #D4AF37; --bg: #0F0A05; --card: #1A140E; }
-        body { font-family: 'Fauna One', serif; background-color: var(--bg); color: var(--gold); padding: 40px 20px; }
-        .lux-serif { font-family: 'Cinzel', serif; letter-spacing: 0.15em; }
+        :root { --gold: #D4AF37; --bg: #050505; --card-bg: #0F0B08; }
         
-        /* Category Header */
-        .category-header { 
-            border-bottom: 1px solid rgba(212, 175, 55, 0.3); 
-            margin: 60px 0 25px 0; padding-bottom: 10px;
-            font-size: 1rem; color: var(--gold); 
-            text-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
-            letter-spacing: 0.2em;
+        body { 
+            font-family: 'Fauna One', serif; 
+            background-color: var(--bg); 
+            color: var(--gold); 
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        
+        .lux-serif { font-family: 'Cinzel', serif; }
+
+        /* HEADER STYLING */
+        .archive-header { text-align: center; margin-bottom: 80px; position: relative; }
+        .archive-title { font-size: 3rem; letter-spacing: 0.15em; text-shadow: 0 0 20px rgba(212, 175, 55, 0.2); margin: 0; }
+        .stat-line { font-size: 0.65rem; letter-spacing: 0.3em; opacity: 0.5; margin-top: 15px; text-transform: uppercase; }
+
+        /* CATEGORY WINGS */
+        .wing-section { margin-bottom: 70px; }
+        .wing-header { 
+            font-size: 0.8rem; color: #fff; opacity: 0.3; 
+            letter-spacing: 0.2em; border-bottom: 1px solid rgba(255,255,255,0.1); 
+            padding-bottom: 15px; margin-bottom: 25px;
         }
 
-        /* The Grid - Now flexible height */
-        .book-row {
-            display: grid; 
-            /* Columns: Title gets the most space, then Author, then buttons fixed width */
-            grid-template-columns: 2fr 1.5fr 80px 100px; 
-            align-items: center; gap: 20px;
-            padding: 20px 25px; 
-            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
-            background: var(--card); 
-            border-radius: 6px; 
-            margin-bottom: 12px;
-            transition: 0.3s ease-in-out;
+        /* BOOK CARD - THE NEW LAYOUT */
+        .book-card {
+            display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(90deg, var(--card-bg) 0%, transparent 100%);
+            border-left: 2px solid rgba(212, 175, 55, 0.1);
+            padding: 25px 30px; margin-bottom: 15px;
+            transition: all 0.4s ease;
+            position: relative; overflow: hidden;
         }
 
-        .book-row:hover { 
-            background: #251d16; 
-            border-color: rgba(212, 175, 55, 0.4);
+        .book-card:hover { 
+            border-left: 2px solid var(--gold); 
+            background: linear-gradient(90deg, #16100a 0%, transparent 100%);
             transform: translateX(5px);
-            box-shadow: -5px 5px 20px rgba(0,0,0,0.5);
+            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
         }
 
-        /* Title & Author Styling - NO TRUNCATION */
+        /* TEXT TYPOGRAPHY */
+        .info-col { flex-grow: 1; padding-right: 40px; }
         .book-title { 
-            font-weight: bold; font-size: 1rem; 
-            color: #fff; line-height: 1.4;
-            /* Allow text to wrap naturally */
-            word-wrap: break-word; 
+            font-family: 'Cinzel', serif; font-size: 1.25rem; 
+            color: #fff; margin-bottom: 6px; line-height: 1.3;
         }
-
         .book-author { 
-            font-size: 0.85rem; font-style: italic; 
-            color: rgba(212, 175, 55, 0.7);
-            line-height: 1.4;
+            font-size: 0.75rem; color: var(--gold); 
+            font-style: italic; opacity: 0.7; letter-spacing: 0.05em; 
         }
-        
-        /* Buttons */
-        .read-link { 
-            display: inline-block; text-align: center; color: var(--gold); text-decoration: none; 
-            border: 1px solid rgba(212, 175, 55, 0.3); padding: 8px 0; 
-            font-size: 0.7rem; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px;
-            border-radius: 2px;
-        }
-        .read-link:hover { background: var(--gold); color: black; font-weight: bold; }
 
-        .delete-btn {
-            text-align: center; color: #ff5555; cursor: pointer; opacity: 0.5;
-            font-size: 0.7rem; transition: 0.3s; letter-spacing: 0.1em; text-transform: uppercase;
+        /* ACTION BUTTONS */
+        .action-col { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; min-width: 140px; }
+        
+        .read-btn {
+            padding: 8px 24px; 
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            color: var(--gold); 
+            font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+            text-decoration: none; transition: 0.3s;
+            background: rgba(212, 175, 55, 0.02);
         }
-        .delete-btn:hover { opacity: 1; text-decoration: underline; text-shadow: 0 0 10px rgba(255, 85, 85, 0.4); }
+        .read-btn:hover { 
+            background: var(--gold); color: #000; 
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); 
+        }
+
+        .burn-btn {
+            font-size: 0.6rem; color: #EF4444; opacity: 0.4; 
+            cursor: pointer; letter-spacing: 0.1em; transition: 0.3s;
+            background: none; border: none; padding: 0;
+            text-transform: uppercase;
+        }
+        .burn-btn:hover { opacity: 1; text-decoration: underline; text-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
+
+        /* Empty State */
+        .empty-state { text-align: center; opacity: 0.3; padding: 60px; font-style: italic; font-size: 0.9rem; }
     </style>
 </head>
-<body class="max-w-6xl mx-auto">
+<body class="max-w-5xl mx-auto">
 
-    <header class="mb-20 text-center pt-10">
-        <button onclick="window.location.href='dashboard.html'" class="text-[10px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-all mb-6">← Return to Dashboard</button>
-        <h1 class="lux-serif text-5xl">THE ARCHIVE</h1>
-        <div class="h-[1px] w-32 bg-[#D4AF37] mx-auto my-8 opacity-30"></div>
-        <p id="total-books" class="text-[10px] uppercase tracking-[0.3em] opacity-60">Scanning Vault...</p>
+    <header class="archive-header">
+        <button onclick="window.location.href='dashboard.html'" class="absolute left-0 top-2 text-[9px] uppercase tracking-[0.3em] opacity-40 hover:opacity-100 transition-all text-gold">← Return</button>
+        <h1 class="lux-serif archive-title">THE ARCHIVE</h1>
+        <p id="total-stat" class="stat-line">Initialising Vault...</p>
     </header>
 
-    <div id="archive-container">
-        </div>
+    <div id="vault-content"></div>
 
     <script>
-        // The 8 Pillars
-        const CATEGORIES = [
-            "Philosophy", "History", "Science", "Fiction", 
-            "Poetry", "Biography", "Religion", "Other Wisdom"
-        ];
+        const CATEGORIES = ["Philosophy", "History", "Science", "Fiction", "Poetry", "Biography", "Religion", "Other Wisdom"];
 
-        async function renderVault() {
-            const container = document.getElementById('archive-container');
-            
-            // 1. Fetch Library - Ensure we look in the correct 'veridian_1_library' box
+        async function manifestVault() {
+            const container = document.getElementById('vault-content');
             let library = [];
+            
+            // 1. Fetch from the CORRECT database key
             try {
                 library = await localforage.getItem('veridian_1_library') || [];
-            } catch (e) { console.error("Database Error:", e); }
+            } catch (e) { console.error("Database Locked:", e); }
 
-            document.getElementById('total-books').innerText = library.length + " VOLUMES STORED";
+            document.getElementById('total-stat').innerText = `${library.length} SCROLLS PRESERVED`;
             container.innerHTML = '';
 
             if (library.length === 0) {
-                container.innerHTML = `<div class="text-center opacity-30 mt-20 italic">The Archive is empty. Upload a book or visit the Great Library.</div>`;
+                container.innerHTML = `<div class="empty-state">The shelves are bare. Upload knowledge or visit the Great Library.</div>`;
                 return;
             }
 
             // 2. Render Categories
             CATEGORIES.forEach(cat => {
-                const booksInCat = library.filter(book => {
-                    // Normalize for comparison (handle 'science' vs 'Science')
-                    const bookCat = (book.category || "Other Wisdom").trim();
-                    
+                const books = library.filter(book => {
+                    const bCat = (book.category || "Other Wisdom").trim().toLowerCase();
                     if (cat === "Other Wisdom") {
-                        // Check if book category is NOT in our main list (case insensitive)
-                        const known = CATEGORIES.map(c => c.toLowerCase());
-                        return !known.includes(bookCat.toLowerCase());
+                        return !CATEGORIES.map(c => c.toLowerCase()).includes(bCat);
                     }
-                    
-                    return bookCat.toLowerCase() === cat.toLowerCase();
+                    return bCat === cat.toLowerCase();
                 });
 
-                if (booksInCat.length > 0) {
-                    const section = document.createElement('div');
-                    section.innerHTML = `<h2 class="category-header lux-serif uppercase">${cat}</h2>`;
+                if (books.length > 0) {
+                    const wing = document.createElement('div');
+                    wing.className = 'wing-section';
                     
-                    booksInCat.forEach(book => {
-                        // Use ID if exists, otherwise fallback to safe random string
+                    // Wing Title
+                    wing.innerHTML = `<h3 class="wing-header lux-serif uppercase">${cat}</h3>`;
+                    
+                    // Book Cards
+                    books.forEach(book => {
+                        // Ensure ID exists (Legacy Support)
                         const safeId = book.id || "legacy-" + Math.random().toString(36).substr(2, 9);
                         
-                        const row = document.createElement('div');
-                        row.className = 'book-row';
-                        row.innerHTML = `
-                            <div class="book-title">${book.title}</div>
-                            <div class="book-author">${book.author || 'Unknown'}</div>
-                            <a href="reader.html?id=${safeId}" class="read-link">READ</a>
-                            <div class="delete-btn" onclick="obliterate('${safeId}')">OBLITERATE</div>
+                        const card = document.createElement('div');
+                        card.className = 'book-card';
+                        card.innerHTML = `
+                            <div class="info-col">
+                                <div class="book-title">${book.title}</div>
+                                <div class="book-author">By ${book.author || 'Unknown Scribe'}</div>
+                            </div>
+                            <div class="action-col">
+                                <a href="reader.html?id=${safeId}" class="read-btn">Open Scroll</a>
+                                <button onclick="burnScroll('${safeId}')" class="burn-btn">Obliterate</button>
+                            </div>
                         `;
-                        section.appendChild(row);
+                        wing.appendChild(card);
                     });
-                    container.appendChild(section);
+                    container.appendChild(wing);
                 }
             });
         }
 
-        async function obliterate(id) {
-            if(confirm("Are you sure you wish to burn this volume? It cannot be undone.")) {
+        async function burnScroll(id) {
+            if(confirm("This knowledge will be lost forever. Proceed?")) {
                 let library = await localforage.getItem('veridian_1_library') || [];
-                
-                // Remove the book
-                const newLibrary = library.filter(book => book.id !== id);
-                
-                await localforage.setItem('veridian_1_library', newLibrary);
-                renderVault(); // Refresh
+                library = library.filter(b => b.id !== id);
+                await localforage.setItem('veridian_1_library', library);
+                manifestVault();
             }
         }
 
-        window.onload = renderVault;
+        window.onload = manifestVault;
     </script>
 </body>
 </html>
