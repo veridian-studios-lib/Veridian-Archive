@@ -3,211 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Veridian | The Vault Archive</title>
+    <title>Veridian | The Archive</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #D4AF37; --bg: #0F0A05; --card: #1A140E; }
-        body { 
-            font-family: 'Fauna One', serif; background-color: #0F0A05; color: #D4AF37; 
-            margin: 0; min-height: 100vh; padding: 20px;
-        }
-        .lux-serif { font-family: 'Cinzel', serif; letter-spacing: 0.2em; }
+        body { font-family: 'Fauna One', serif; background-color: var(--bg); color: var(--gold); padding: 40px 20px; }
+        .lux-serif { font-family: 'Cinzel', serif; letter-spacing: 0.15em; }
         
-        /* CATEGORY HEADERS */
-        .category-section { margin-bottom: 50px; }
-        .category-title { 
-            border-bottom: 1px solid rgba(212, 175, 55, 0.4); 
-            padding-bottom: 12px; margin-bottom: 25px;
-            font-size: 0.85rem; 
-            color: var(--gold);
-            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
-            font-weight: bold;
+        /* Category Header */
+        .category-header { 
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3); 
+            margin: 50px 0 20px 0; padding-bottom: 10px;
+            font-size: 0.9rem; color: var(--gold); 
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
         }
 
-        /* SCROLL ITEM */
-        .scroll-item {
-            background: #1A140E; border: 1px solid rgba(212, 175, 55, 0.15);
-            padding: 22px; border-radius: 8px; margin-bottom: 15px;
-            display: flex; justify-content: space-between; align-items: center;
-            transition: 0.3s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        /* The Grid */
+        .book-row {
+            display: grid; 
+            grid-template-columns: 2fr 1.5fr 80px 100px; /* Adjusted col sizes */
+            align-items: center; gap: 15px;
+            padding: 18px 15px; border-bottom: 1px solid rgba(212, 175, 55, 0.05);
+            transition: 0.2s; background: var(--card); border-radius: 4px; margin-bottom: 8px;
         }
-        .scroll-item:hover { 
-            border-color: var(--gold); 
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
-            transform: scale(1.01);
+        .book-row:hover { 
+            background: rgba(212, 175, 55, 0.08); 
+            border-color: rgba(212, 175, 55, 0.3);
+            transform: translateX(4px);
         }
-        
-        /* BUTTONS */
-        .action-btn {
-            font-size: 0.7rem; letter-spacing: 0.1em; cursor: pointer; opacity: 0.6; transition: 0.3s;
-            padding: 8px 12px; border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 4px;
-            background: transparent; color: var(--gold); margin-left: 10px;
-        }
-        .action-btn:hover { opacity: 1; background: rgba(212, 175, 55, 0.1); border-color: var(--gold); }
 
-        .delete-btn { color: #ff4444; border-color: rgba(255, 68, 68, 0.3); }
-        .delete-btn:hover { background: rgba(255, 68, 68, 0.15); border-color: #ff4444; color: white; }
-        
-        .empty-msg { opacity: 0.3; font-style: italic; font-size: 0.8rem; padding: 10px; }
+        /* Text Safety (Prevents layout breaking) */
+        .truncate-text {
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
 
-        /* READ MODAL */
-        #readModal { backdrop-filter: blur(5px); }
+        .book-title { font-weight: bold; font-size: 0.9rem; letter-spacing: 0.05em; color: #fff; }
+        .book-author { opacity: 0.6; font-size: 0.75rem; font-style: italic; color: var(--gold); }
+        
+        /* Buttons */
+        .read-link { 
+            display: block; text-align: center; color: var(--gold); text-decoration: none; 
+            border: 1px solid rgba(212, 175, 55, 0.3); padding: 6px 0; 
+            font-size: 0.65rem; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .read-link:hover { background: var(--gold); color: black; font-weight: bold; }
+
+        .delete-btn {
+            text-align: center; color: #ff5555; cursor: pointer; opacity: 0.5;
+            font-size: 0.65rem; transition: 0.3s; letter-spacing: 0.1em; text-transform: uppercase;
+        }
+        .delete-btn:hover { opacity: 1; text-decoration: underline; text-shadow: 0 0 8px rgba(255, 85, 85, 0.5); }
     </style>
 </head>
-<body class="max-w-3xl mx-auto">
+<body class="max-w-5xl mx-auto">
 
-    <header class="py-10 flex justify-between items-center border-b border-gold/10 mb-8">
-        <div>
-            <button onclick="window.location.href='dashboard.html'" class="text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-all cursor-pointer">← Back to Dashboard</button>
-            <h1 class="lux-serif text-3xl mt-2" style="text-shadow: 0 0 15px rgba(212, 175, 55, 0.3);">THE VAULT</h1>
-        </div>
-        <div class="text-right">
-            <div class="text-3xl opacity-20">🏛️</div>
-            <p id="total-count" class="text-[9px] opacity-40 mt-1">0 SCROLLS</p>
-        </div>
+    <header class="mb-16 text-center">
+        <button onclick="window.location.href='dashboard.html'" class="text-[10px] uppercase tracking-widest opacity-30 hover:opacity-100 transition-all mb-4">← Return to Dashboard</button>
+        <h1 class="lux-serif text-4xl">THE ARCHIVE</h1>
+        <div class="h-[1px] w-24 bg-[#D4AF37] mx-auto my-6 opacity-30"></div>
+        <p id="total-books" class="text-[10px] uppercase tracking-[0.3em] opacity-50">Loading Archive...</p>
     </header>
 
-    <div id="vault-content"></div>
-
-    <div id="readModal" class="fixed inset-0 bg-black/95 hidden z-50 p-4 overflow-y-auto">
-        <div class="max-w-2xl mx-auto mt-10 mb-20">
-            <div class="flex justify-between items-center mb-10 border-b border-[#D4AF37]/30 pb-4">
-                <h2 class="lux-serif text-xl">READING SCROLL</h2>
-                <button onclick="closeReader()" class="text-white opacity-50 hover:opacity-100 text-sm tracking-widest">✕ CLOSE</button>
-            </div>
-            <div id="modalContent" class="text-gray-300 leading-loose text-lg font-serif"></div>
+    <div id="archive-container">
         </div>
-    </div>
 
     <script>
-        const categories = ["Science", "Philosophy", "History", "Documents", "Other"];
+        // The 8 Pillars (Master List)
+        const CATEGORIES = [
+            "Philosophy", "History", "Science", "Fiction", 
+            "Poetry", "Biography", "Religion", "Other Wisdom"
+        ];
 
-        async function manifestVault() {
-            const vaultContent = document.getElementById('vault-content');
+        async function renderVault() {
+            const container = document.getElementById('archive-container');
             
-            // --- FIX IS HERE: UPDATED TO 'veridian_1_library' ---
-            const library = await localforage.getItem('veridian_1_library') || [];
-            
-            document.getElementById('total-count').innerText = library.length + " SCROLLS";
-            vaultContent.innerHTML = ''; 
+            // 1. Fetch Library
+            let library = [];
+            try {
+                library = await localforage.getItem('veridian_1_library') || [];
+            } catch (e) { console.error("Database Error:", e); }
+
+            // 2. Update Stats
+            document.getElementById('total-books').innerText = library.length + " VOLUMES STORED";
+            container.innerHTML = '';
 
             if (library.length === 0) {
-                vaultContent.innerHTML = `
-                    <div class="text-center opacity-40 mt-20">
-                        <p class="lux-serif mb-4">The Vault is Empty</p>
-                        <a href="discovery.html" class="border border-[#D4AF37] px-4 py-2 text-xs hover:bg-[#D4AF37] hover:text-black transition">GO TO DISCOVERY</a>
-                    </div>`;
+                container.innerHTML = `<div class="text-center opacity-30 mt-20 italic">The Archive is empty. Go forth and discover wisdom.</div>`;
                 return;
             }
 
-            categories.forEach(cat => {
-                const filteredBooks = library.filter(book => (book.category || "Other") === cat);
+            // 3. Sort & Render Categories
+            CATEGORIES.forEach(cat => {
+                // Filter books for this category
+                const booksInCat = library.filter(book => {
+                    // Safe logic: Handle missing categories and Case Sensitivity
+                    const bookCat = (book.category || "Other Wisdom").trim();
+                    const targetCat = cat;
 
-                // Only show category if it has books
-                if (filteredBooks.length > 0) {
+                    // Standard Comparison (Science == Science)
+                    if (bookCat.toLowerCase() === targetCat.toLowerCase()) return true;
+
+                    // "Other Wisdom" Catch-all Logic
+                    if (targetCat === "Other Wisdom") {
+                        // If book category is NOT found in the main list, it goes here
+                        const knownCategories = CATEGORIES.map(c => c.toLowerCase());
+                        return !knownCategories.includes(bookCat.toLowerCase());
+                    }
+                    return false;
+                });
+
+                // Only render section if books exist
+                if (booksInCat.length > 0) {
                     const section = document.createElement('div');
-                    section.className = 'category-section';
+                    section.innerHTML = `<h2 class="category-header lux-serif uppercase">${cat}</h2>`;
                     
-                    section.innerHTML = `
-                        <h2 class="category-title lux-serif uppercase">${cat}</h2>
-                        <div id="list-${cat}"></div>
-                    `;
-                    vaultContent.appendChild(section);
-                    
-                    const listContainer = document.getElementById(`list-${cat}`);
-
-                    filteredBooks.forEach(book => {
-                        // Create safe ID for buttons
-                        const safeTitle = book.title.replace(/'/g, "\\'");
+                    booksInCat.forEach(book => {
+                        // FALLBACK: If book has no ID (old data), use Title or Random
+                        const safeId = book.id || "legacy-" + Math.random().toString(36).substr(2, 9);
                         
-                        const item = document.createElement('div');
-                        item.className = 'scroll-item';
-                        item.innerHTML = `
-                            <div class="flex-1">
-                                <h3 class="text-sm font-bold uppercase tracking-wider">${book.title}</h3>
-                                <p class="text-[10px] opacity-60 mt-1">SCRIBE: ${book.author}</p>
-                            </div>
-                            <div class="flex items-center">
-                                <button class="action-btn" onclick="openReader('${safeTitle}')">READ</button>
-                                <button class="action-btn" onclick="downloadJSON('${safeTitle}')">⇩</button>
-                                <button class="action-btn delete-btn" onclick="obliterateScroll('${safeTitle}')">✕</button>
-                            </div>
+                        const row = document.createElement('div');
+                        row.className = 'book-row';
+                        row.innerHTML = `
+                            <div class="book-title truncate-text" title="${book.title}">${book.title}</div>
+                            <div class="book-author truncate-text">${book.author || 'Unknown Scribe'}</div>
+                            <a href="reader.html?id=${safeId}" class="read-link">READ</a>
+                            <div class="delete-btn" onclick="obliterate('${safeId}')">OBLITERATE</div>
                         `;
-                        listContainer.appendChild(item);
+                        section.appendChild(row);
                     });
+
+                    container.appendChild(section);
                 }
             });
-            
-            // Handle uncategorized items
-            const others = library.filter(book => !categories.includes(book.category));
-            if (others.length > 0) {
-                // (Optional: You can add logic here to render "Uncategorized" if you wish)
-            }
         }
 
-        // --- 1. READER ENGINE ---
-        async function openReader(title) {
-            const library = await localforage.getItem('veridian_1_library');
-            const book = library.find(b => b.title === title);
-            if (!book) return;
-
-            const modal = document.getElementById('readModal');
-            const contentDiv = document.getElementById('modalContent');
-            
-            let htmlContent = `<h1 class="text-3xl text-[#D4AF37] mb-8 font-serif text-center uppercase">${book.title}</h1>`;
-            
-            if (Array.isArray(book.content)) {
-                book.content.forEach(section => {
-                    if (Array.isArray(section)) {
-                        section.forEach(p => htmlContent += `<p class="mb-6 opacity-90">${p}</p>`);
-                        htmlContent += `<div class="h-[1px] bg-[#D4AF37] opacity-20 w-1/2 mx-auto my-8"></div>`;
-                    }
-                });
-            } else {
-                htmlContent += `<p>${book.content || 'Content corrupted.'}</p>`;
-            }
-
-            contentDiv.innerHTML = htmlContent;
-            modal.classList.remove('hidden');
-        }
-
-        function closeReader() {
-            document.getElementById('readModal').classList.add('hidden');
-        }
-
-        // --- 2. DELETE ENGINE ---
-        async function obliterateScroll(title) {
-            if (confirm("Permanently remove this scroll from your archive?")) {
+        async function obliterate(id) {
+            if(confirm("Are you sure you wish to remove this volume from the archive?")) {
                 let library = await localforage.getItem('veridian_1_library') || [];
-                // Filter OUT the book with the matching title
-                library = library.filter(book => book.title !== title);
-                await localforage.setItem('veridian_1_library', library);
-                manifestVault(); // Refresh page
+                
+                // Remove book by ID
+                const newLibrary = library.filter(book => book.id !== id);
+                
+                // Safety: If ID logic failed (legacy books), try removing by Title as backup
+                if (newLibrary.length === library.length) {
+                     // (Optional: Advanced logic could go here, but ID usually works)
+                }
+
+                await localforage.setItem('veridian_1_library', newLibrary);
+                renderVault(); // Refresh
             }
         }
 
-        // --- 3. DOWNLOAD ENGINE ---
-        async function downloadJSON(title) {
-            let library = await localforage.getItem('veridian_1_library');
-            const book = library.find(b => b.title === title);
-            if (!book) return;
-
-            const dataStr = JSON.stringify(book, null, 4);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = book.title.replace(/\s+/g, '_') + "_Veridian.json";
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        }
-
-        window.onload = manifestVault;
+        window.onload = renderVault;
     </script>
 </body>
 </html>
