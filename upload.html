@@ -145,7 +145,7 @@
                 </div>
                 <button onclick="capturePage()" class="snap-btn">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2-2z"></path>
                         <circle cx="12" cy="13" r="4"></circle>
                     </svg>
                 </button>
@@ -172,30 +172,20 @@
 
     <canvas id="canvas" style="display:none;"></canvas>
 
+    <script src="upload-enhancements.js"></script> 
+
     <script>
+        // Set worker source for PDF.js
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+        
         let pageCount = 0;
-        let lastScanLength = 0; // For undo functionality
+        let lastScanLength = 0;
         let videoStream = null;
         const statusDisp = document.getElementById('ocr-status');
         const progBar = document.getElementById('progress-bar');
         const progContainer = document.getElementById('progress-container');
 
-        // --- THE SECRET ADMIN GATE ---
-        let taps = 0;
-        document.getElementById('scribe-title').addEventListener('click', () => {
-            taps++;
-            setTimeout(() => taps = 0, 500); // Reset if not double tapped quickly
-            if(taps === 2) {
-                const pass = prompt("SPEAK THE WORDS OF POWER (Admin Password):");
-                if(pass === "veridian") {
-                    window.location.href = 'admin.html';
-                } else {
-                    alert("ACCESS DENIED.");
-                }
-            }
-        });
-
+        // --- CAMERA & UI LOGIC (Kept Here) ---
         function toggleTool(tool) {
             document.getElementById('camera-section').classList.toggle('hidden', tool !== 'camera');
             document.getElementById('pdf-section').classList.toggle('hidden', tool !== 'pdf');
@@ -248,7 +238,7 @@
 
             ctx.drawImage(video, startX, startY, cropW, cropH, 0, 0, canvas.width, canvas.height);
 
-            // Binarization
+            // Binarization (Making text clearer)
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
             for (let i = 0; i < data.length; i += 4) {
@@ -278,10 +268,8 @@
                 
                 const textArea = document.getElementById('bookContent');
                 const current = textArea.value;
-                const newContent = (current ? "\n\n" : "") + cleaned;
                 
-                // Track length for Undo function
-                lastScanLength = cleaned.length + (current ? 2 : 0); // +2 for newlines
+                lastScanLength = cleaned.length + (current ? 2 : 0); 
                 
                 textArea.value = current + (current ? "\n\n" : "") + cleaned;
                 document.getElementById('undo-btn').style.display = 'block';
@@ -303,55 +291,18 @@
             }
         }
 
-        // PDF & Save Logic
-        document.getElementById('file-input').addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            document.getElementById('bookTitle').value = file.name.replace('.pdf', '').toUpperCase();
-            const reader = new FileReader();
-            reader.onload = async function() {
-                const typedarray = new Uint8Array(this.result);
-                const pdf = await pdfjsLib.getDocument(typedarray).promise;
-                let fullText = "";
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    const page = await pdf.getPage(i);
-                    const content = await page.getTextContent();
-                    fullText += content.items.map(item => item.str).join(' ') + "\n\n";
+        // --- SECRET ADMIN GATE ---
+        let taps = 0;
+        document.getElementById('scribe-title').addEventListener('click', () => {
+            taps++;
+            setTimeout(() => taps = 0, 500); 
+            if(taps === 2) {
+                const pass = prompt("SPEAK THE WORDS OF POWER:");
+                if(pass === "veridian") {
+                    window.location.href = 'admin.html';
                 }
-                document.getElementById('bookContent').value = fullText;
-            };
-            reader.readAsArrayBuffer(file);
+            }
         });
-
-        async function saveToArchive() {
-            const title = document.getElementById('bookTitle').value;
-            const author = document.getElementById('bookAuthor').value || "Unknown Author";
-            const category = document.getElementById('bookCategory').value;
-            const rawContent = document.getElementById('bookContent').value;
-            if(!title || !rawContent || !category) return alert("Scroll is incomplete.");
-
-            const structuredContent = rawContent.split('\n\n').filter(p => p.trim() !== "").map(p => {
-                const sentences = p.match(/[^.!?]+[.!?]+|\S+/g) || [p];
-                return sentences.map(s => s.trim());
-            });
-
-            const newBook = {
-                id: "vault-" + Date.now(),
-                title: title.toUpperCase(),
-                author: author.toUpperCase(),
-                category: category,
-                content: structuredContent,
-                bookmarks: [],
-                lastPosition: { pIdx: 0, sIdx: 0 },
-                lastRead: Date.now()
-            };
-
-            // FIXED: We now point to 'veridian_1_library' so the Vault can see it
-let library = await localforage.getItem('veridian_1_library') || [];
-library.push(newBook);
-await localforage.setItem('veridian_1_library', library);
-            window.location.href = 'dashboard.html';
-        }
     </script>
 </body>
 </html>
