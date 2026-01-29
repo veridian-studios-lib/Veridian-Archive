@@ -99,16 +99,16 @@
 
     <div id="vault-content"></div>
 
-    <script>
+        <script>
         const CATEGORIES = ["Philosophy", "History", "Science", "Fiction", "Poetry", "Biography", "Religion", "Other Wisdom"];
 
         async function manifestVault() {
             const container = document.getElementById('vault-content');
             let library = [];
             
-            // 1. Fetch from the CORRECT database key
+            // 1. CHANGED BACK TO ORIGINAL KEY: 'veridian_library'
             try {
-                library = await localforage.getItem('veridian_1_library') || [];
+                library = await localforage.getItem('veridian_library') || [];
             } catch (e) { console.error("Database Locked:", e); }
 
             document.getElementById('total-stat').innerText = `${library.length} SCROLLS PRESERVED`;
@@ -132,13 +132,9 @@
                 if (books.length > 0) {
                     const wing = document.createElement('div');
                     wing.className = 'wing-section';
-                    
-                    // Wing Title
                     wing.innerHTML = `<h3 class="wing-header lux-serif uppercase">${cat}</h3>`;
                     
-                    // Book Cards
                     books.forEach(book => {
-                        // Ensure ID exists (Legacy Support)
                         const safeId = book.id || "legacy-" + Math.random().toString(36).substr(2, 9);
                         
                         const card = document.createElement('div');
@@ -162,14 +158,15 @@
 
         async function burnScroll(id) {
             if(confirm("This knowledge will be lost forever. Proceed?")) {
-                let library = await localforage.getItem('veridian_1_library') || [];
+                // UPDATE: Deleting from the correct 'veridian_library' key
+                let library = await localforage.getItem('veridian_library') || [];
                 library = library.filter(b => b.id !== id);
-                await localforage.setItem('veridian_1_library', library);
+                await localforage.setItem('veridian_library', library);
                 manifestVault();
             }
         }
 
         window.onload = manifestVault;
-    </script>
+        </script>
 </body>
 </html>
