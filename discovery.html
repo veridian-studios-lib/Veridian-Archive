@@ -6,7 +6,7 @@
     <title>Veridian | The Great Library</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
-    <script src="global_library.js"></script>
+    <script src="global_library.js"></script> 
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #D4AF37; --bg: #0F0A05; --card: #1A140E; }
@@ -71,18 +71,17 @@
         <p class="text-[9px] opacity-30 mt-8">LINKING TO PROJECT GUTENBERG</p>
     </footer>
 
-        <script>
+    <script>
         // --- 1. RENDER ENGINE ---
-        // This function builds the visual cards for the books found in your library file
         async function renderBooks(books) {
             const grid = document.getElementById('library-grid');
             if (!grid) return;
             grid.innerHTML = ''; 
 
-            // Connect to the local vault to see what the user already has
+            // CHANGED: Now looking at the Unified 'veridian_library'
             let localLibrary = [];
             try {
-                localLibrary = await localforage.getItem('veridian_1_library') || [];
+                localLibrary = await localforage.getItem('veridian_library') || [];
             } catch(e) { 
                 console.log("Vault currently empty."); 
             }
@@ -90,6 +89,7 @@
             books.forEach(book => {
                 // Check if book exists in vault by comparing titles
                 const isAlreadyStored = localLibrary.some(b => b.title === book.title);
+                
                 // Create a clean ID for the buttons by removing spaces from the title
                 const cleanId = book.title.replace(/\s+/g, '');
                 
@@ -125,7 +125,6 @@
         }
 
         // --- 2. SEARCH ENGINE ---
-        // Filters the GREAT_LIBRARY variable based on user input
         function searchLibrary() {
             const query = document.getElementById('searchInput').value.toLowerCase();
             if (typeof GREAT_LIBRARY !== 'undefined') {
@@ -138,7 +137,6 @@
         }
 
         // --- 3. DOWNLOAD SYSTEM ---
-        // Creates a physical .json file for the user to keep
         function downloadBook(title) {
             const book = GREAT_LIBRARY.find(b => b.title === title);
             if (!book) return;
@@ -155,35 +153,50 @@
             document.body.removeChild(a);
         }
 
-        // --- 4. VAULT SYSTEM ---
-        // Saves the data to the browser's local storage (LocalForage)
+        // --- 4. VAULT SYSTEM (The Fix) ---
         async function commitToArchive(title) {
             const bookToCopy = GREAT_LIBRARY.find(b => b.title === title);
+            if (!bookToCopy) return;
+
             const cleanId = title.replace(/\s+/g, '');
             const btn = document.getElementById("btn-" + cleanId);
 
             try {
-                let library = await localforage.getItem('veridian_1_library') || [];
+                // 1. Get the UNIFIED library
+                let library = await localforage.getItem('veridian_library') || [];
+                
                 if (!library.some(b => b.title === title)) {
-                    library.push(bookToCopy);
-                    await localforage.setItem('veridian_1_library', library);
+                    // 2. Enhance the book object before saving (Important for new Reader)
+                    const enhancedBook = {
+                        ...bookToCopy,
+                        id: "vault-" + Date.now(), // Give it a fresh ID
+                        added: Date.now(),
+                        lastRead: Date.now()
+                    };
+                    
+                    library.push(enhancedBook);
+                    
+                    // 3. Save to the CORRECT key
+                    await localforage.setItem('veridian_library', library);
                 }
+                
+                // UI Feedback
                 btn.innerText = "INSCRIBED";
                 btn.disabled = true;
                 btn.classList.add('disabled');
             } catch (e) {
-                console.error("Vault entry failed.");
+                console.error("Vault entry failed:", e);
+                alert("The Archives are temporarily closed. (Error saving)");
             }
         }
 
         // --- 5. INITIALIZATION ---
-        // Runs as soon as the window finishes loading
         window.onload = () => {
             if (typeof GREAT_LIBRARY !== 'undefined') {
                 console.log("Success: Archive Loaded.");
                 renderBooks(GREAT_LIBRARY);
             } else {
-                console.error("Error: Variable 'GREAT_LIBRARY' not detected. Check your filename!");
+                console.error("Error: Variable 'GREAT_LIBRARY' not detected. Make sure global_library.js is linked!");
             }
         };
     </script>
