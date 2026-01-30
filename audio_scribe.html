@@ -3,310 +3,318 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Veridian | The Audio Scribe</title>
+    <title>Veridian | Audio Scribe</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #D4AF37; --bg: #050505; --card: #120e0a; }
+        :root { --gold: #D4AF37; --bg: #050505; }
         body { 
             font-family: 'Fauna One', serif; background-color: var(--bg); color: var(--gold); 
-            display: flex; flex-direction: column; height: 100vh; overflow: hidden;
-        }
-        .lux-serif { font-family: 'Cinzel', serif; }
-
-        /* The Album Art / Book Cover Area */
-        .cover-area {
-            flex-grow: 1; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; text-align: center;
-            padding: 40px;
-        }
-        .book-icon {
-            width: 220px; height: 300px; 
-            border: 2px solid var(--gold); 
-            background: linear-gradient(135deg, #1a1510 0%, #050505 100%);
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 50px rgba(212, 175, 55, 0.15);
-            margin-bottom: 30px; border-radius: 4px;
+            height: 100vh; display: flex; flex-direction: column; overflow: hidden;
         }
         
-        /* Player Controls */
-        .player-bar {
-            background: rgba(18, 14, 10, 0.95);
+        /* Album Art Pulse */
+        @keyframes pulse-gold {
+            0% { box-shadow: 0 0 20px rgba(212,175,55,0.1); }
+            50% { box-shadow: 0 0 50px rgba(212,175,55,0.4); }
+            100% { box-shadow: 0 0 20px rgba(212,175,55,0.1); }
+        }
+        
+        .cover-art {
+            width: 260px; height: 360px; 
+            background: linear-gradient(180deg, #1a1510, #000);
+            border: 1px solid var(--gold);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto; margin-top: 40px;
+            animation: pulse-gold 4s infinite ease-in-out;
+            position: relative;
+        }
+
+        .visualizer-bar {
+            width: 6px; background: var(--gold); margin: 0 2px;
+            animation: equalizer 1s infinite;
+        }
+        @keyframes equalizer { 0%, 100% { height: 10px; } 50% { height: 40px; } }
+
+        /* Controls */
+        .player-ui {
+            background: rgba(20, 15, 10, 0.95);
             border-top: 1px solid rgba(212, 175, 55, 0.2);
-            padding: 30px 20px 50px 20px;
-            backdrop-filter: blur(10px);
+            padding: 20px;
+            margin-top: auto;
+            padding-bottom: 50px; /* Safe area for mobile */
+        }
+        
+        input[type=range] {
+            width: 100%; -webkit-appearance: none; background: transparent; margin-bottom: 20px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 12px; width: 12px;
+            border-radius: 50%; background: var(--gold); margin-top: -5px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 2px; background: rgba(212,175,55,0.3);
         }
 
-        .progress-container {
-            width: 100%; height: 4px; background: rgba(255,255,255,0.1); 
-            border-radius: 2px; margin-bottom: 25px; position: relative; cursor: pointer;
-        }
-        .progress-fill {
-            height: 100%; background: var(--gold); width: 0%; 
-            box-shadow: 0 0 10px var(--gold); position: relative;
-        }
-        .progress-knob {
-            width: 12px; height: 12px; background: var(--gold); border-radius: 50%;
-            position: absolute; right: -6px; top: -4px; opacity: 0; transition: 0.2s;
-        }
-        .progress-container:hover .progress-knob { opacity: 1; }
-
-        .controls { display: flex; justify-content: center; align-items: center; gap: 40px; }
-        
-        .ctrl-btn {
-            background: none; border: none; color: var(--gold); cursor: pointer;
-            transition: 0.2s; opacity: 0.7;
-        }
-        .ctrl-btn:hover { opacity: 1; transform: scale(1.1); text-shadow: 0 0 10px var(--gold); }
-        
-        .play-btn {
-            width: 70px; height: 70px; border-radius: 50%;
-            border: 2px solid var(--gold); color: var(--gold);
+        .btn-circle {
+            width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--gold);
             display: flex; align-items: center; justify-content: center;
-            font-size: 24px; background: rgba(212, 175, 55, 0.1);
-        }
-        .play-btn:hover { background: var(--gold); color: black; box-shadow: 0 0 30px rgba(212,175,55,0.4); }
-
-        .text-display {
-            font-size: 1.1rem; line-height: 1.6; max-width: 600px; height: 80px;
-            overflow: hidden; opacity: 0.8; margin-top: 20px;
-            mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+            font-size: 24px; color: var(--gold); background: transparent;
         }
     </style>
 </head>
 <body>
 
-    <div class="absolute top-0 left-0 w-full p-6 flex justify-between z-10">
-        <button onclick="history.back()" class="text-[10px] uppercase tracking-[0.3em] opacity-50 hover:opacity-100">↓ Minimize</button>
-        <div class="text-[10px] uppercase tracking-[0.3em] opacity-30">Veridian Audio</div>
+    <div class="flex justify-between items-center p-6">
+        <button onclick="history.back()" class="text-[10px] uppercase tracking-[0.2em] opacity-60">↓ Return</button>
+        <div class="text-[10px] uppercase tracking-[0.2em] text-red-500 animate-pulse" id="live-indicator" style="display:none;">● LIVE</div>
     </div>
 
-    <div class="cover-area">
-        <div class="book-icon">
-            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-            </svg>
+    <div class="flex-1 flex flex-col items-center text-center px-6">
+        <div class="cover-art">
+            <div id="equalizer-anim" class="flex items-end h-16 hidden">
+                <div class="visualizer-bar" style="animation-delay: 0s"></div>
+                <div class="visualizer-bar" style="animation-delay: 0.2s"></div>
+                <div class="visualizer-bar" style="animation-delay: 0.4s"></div>
+                <div class="visualizer-bar" style="animation-delay: 0.1s"></div>
+            </div>
+            <span id="cover-initial" class="text-6xl font-serif opacity-20">V</span>
         </div>
-        <h1 id="track-title" class="lux-serif text-2xl mb-2 text-white">Loading Scroll...</h1>
-        <p id="track-author" class="text-sm opacity-50 tracking-widest uppercase">Please Wait</p>
         
-        <div id="current-line-text" class="text-display">
-            The wisdom will appear here as it is spoken...
+        <h2 id="book-title" class="text-xl mt-8 font-serif text-white tracking-wide">Loading...</h2>
+        <p id="book-author" class="text-xs text-[#D4AF37] opacity-60 mt-2 uppercase tracking-[0.2em] mb-8">...</p>
+        
+        <div class="h-24 overflow-hidden relative w-full max-w-md">
+            <p id="subtitle-text" class="text-sm leading-relaxed opacity-90 transition-all duration-300 font-mono text-[#F3F0E6]">
+                Ready to transmit...
+            </p>
+            <div class="absolute bottom-0 w-full h-10 bg-gradient-to-t from-[#050505] to-transparent"></div>
         </div>
     </div>
 
-    <div class="player-bar">
-        <div class="max-w-xl mx-auto">
-            <div class="flex justify-between text-[10px] opacity-40 mb-2 font-mono">
-                <span id="time-current">0:00</span>
-                <span id="time-total">End</span>
-            </div>
-            
-            <div class="progress-container" onclick="seek(event)">
-                <div id="progress-bar" class="progress-fill">
-                    <div class="progress-knob"></div>
-                </div>
-            </div>
+    <audio id="phantom-player" preload="auto"></audio>
 
-            <div class="controls">
-                <button class="ctrl-btn" onclick="playPrev()">
-                    <svg width="30" height="30" fill="currentColor" viewBox="0 0 24 24"><path d="M11 19V5l-7 7 7 7zm9 0V5l-7 7 7 7z"/></svg>
-                </button>
+    <div class="player-ui">
+        <div class="flex justify-between text-[10px] font-mono opacity-50 mb-2 px-1">
+            <span id="curr-time">0:00</span>
+            <span id="total-time">--:--</span>
+        </div>
+        
+        <input type="range" id="seek-slider" value="0" step="1" oninput="userScrub(this.value)">
 
-                <button id="play-pause-btn" class="ctrl-btn play-btn" onclick="togglePlay()">
-                    <svg id="play-icon" width="30" height="30" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                    <svg id="pause-icon" class="hidden" width="30" height="30" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                </button>
+        <div class="flex justify-center items-center gap-8">
+            <button onclick="skip(-1)" class="opacity-70 hover:opacity-100">
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+            </button>
 
-                <button class="ctrl-btn" onclick="playNext()">
-                    <svg width="30" height="30" fill="currentColor" viewBox="0 0 24 24"><path d="M13 5v14l7-7-7-7zM5 5v14l7-7-7-7z"/></svg>
-                </button>
-            </div>
-            
-            <div class="text-center mt-6">
-                <button onclick="changeSpeed()" id="speed-btn" class="text-[10px] border border-white/20 px-3 py-1 rounded opacity-50 hover:opacity-100 uppercase tracking-widest">1x Speed</button>
-            </div>
+            <button id="play-btn" class="btn-circle" onclick="togglePlayback()">
+                <svg id="icon-play" width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <svg id="icon-pause" class="hidden" width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            </button>
+
+            <button onclick="skip(1)" class="opacity-70 hover:opacity-100">
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+            </button>
         </div>
     </div>
-
-    <audio id="silent-track" loop>
-        <source src="https://github.com/anars/blank-audio/raw/master/10-minutes-of-silence.mp3" type="audio/mp3">
-    </audio>
 
     <script>
+        // --- 1. SETUP ---
         const synth = window.speechSynthesis;
-        let book = null;
-        let flatContent = []; // Flattens the book into a single list of sentences
-        let currentIndex = 0;
-        let isPlaying = false;
-        let rate = 1.0;
-        let currentUtterance = null;
+        const audioEl = document.getElementById('phantom-player');
         
-        // 1. LOAD THE BOOK
+        let bookData = null;
+        let flatSentences = [];
+        let currentIndex = 0;
+        let isSyncing = false; // Prevent feedback loops during seeking
+
+        // --- 2. THE PHANTOM AUDIO GENERATOR ---
+        // This creates a silent WAV file in memory to fool the browser
+        function generateSilentAudio(durationSeconds) {
+            const sampleRate = 44100;
+            const numChannels = 1;
+            const bitsPerSample = 16;
+            const blockAlign = numChannels * bitsPerSample / 8;
+            const byteRate = sampleRate * blockAlign;
+            const dataSize = durationSeconds * byteRate;
+            const chunkSize = 36 + dataSize;
+            
+            const buffer = new ArrayBuffer(44 + dataSize);
+            const view = new DataView(buffer);
+
+            // WAV Header
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, chunkSize, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, byteRate, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, bitsPerSample, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, dataSize, true);
+
+            return URL.createObjectURL(new Blob([view], { type: 'audio/wav' }));
+        }
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) view.setUint8(offset + i, string.charCodeAt(i));
+        }
+
+        // --- 3. INIT ---
         window.onload = async () => {
             const params = new URLSearchParams(window.location.search);
-            const bookId = params.get('id');
+            const id = params.get('id');
+            if(!id) return;
 
-            if (!bookId) return alert("No Scroll Selected");
-
-            try {
-                const library = await localforage.getItem('veridian_library') || [];
-                book = library.find(b => b.id === bookId);
+            const library = await localforage.getItem('veridian_library') || [];
+            bookData = library.find(b => b.id === id);
+            
+            if(bookData) {
+                // UI Setup
+                document.getElementById('book-title').innerText = bookData.title;
+                document.getElementById('book-author').innerText = bookData.author;
+                flatSentences = bookData.content.flat();
                 
-                if (!book) throw "Book not found";
-
-                // Setup Metadata
-                document.getElementById('track-title').innerText = book.title;
-                document.getElementById('track-author').innerText = book.author;
+                // ESTIMATE DURATION: Avg sentence duration ~3-5 seconds
+                const estimatedDuration = flatSentences.length * 4; 
                 
-                // Flatten the nested content structure [[sentence, sentence], [sentence]] -> [sentence, sentence, sentence]
-                flatContent = book.content.flat();
+                // Create the "Lie" - A silent audio track of the correct length
+                audioEl.src = generateSilentAudio(estimatedDuration);
                 
-                // Load last position if available
-                // (Simplified: we just start at 0 for now, or you could map the saved pIdx/sIdx)
-                updateUI();
+                // Configure Slider
+                const slider = document.getElementById('seek-slider');
+                slider.max = flatSentences.length - 1;
+                
+                document.getElementById('total-time').innerText = formatTime(flatSentences.length); // Showing "Page" count as time
+                
+                updateSubtitle();
                 setupMediaSession();
-
-            } catch (e) {
-                console.error(e);
-                alert("Error loading audio scroll.");
             }
         };
 
-        // 2. THE AUDIO ENGINE
-        function speakLine(index) {
-            if (index < 0 || index >= flatContent.length) return;
-            
-            // Stop whatever is currently talking
-            synth.cancel();
+        // --- 4. THE SYNC ENGINE (Core Logic) ---
+        
+        // Triggers when user hits PLAY
+        function togglePlayback() {
+            if (audioEl.paused) {
+                // Start everything
+                audioEl.play();
+                document.getElementById('icon-play').classList.add('hidden');
+                document.getElementById('icon-pause').classList.remove('hidden');
+                document.getElementById('live-indicator').style.display = 'block';
+                document.getElementById('equalizer-anim').classList.remove('hidden');
+                document.getElementById('cover-initial').classList.add('hidden');
+                speakCurrentLine();
+            } else {
+                // Pause everything
+                audioEl.pause();
+                synth.cancel();
+                document.getElementById('icon-play').classList.remove('hidden');
+                document.getElementById('icon-pause').classList.add('hidden');
+                document.getElementById('live-indicator').style.display = 'none';
+                document.getElementById('equalizer-anim').classList.add('hidden');
+                document.getElementById('cover-initial').classList.remove('hidden');
+            }
+        }
 
-            const text = flatContent[index];
-            currentUtterance = new SpeechSynthesisUtterance(text);
-            currentUtterance.rate = rate;
+        // The actual voice
+        function speakCurrentLine() {
+            if(synth.speaking) synth.cancel();
             
-            // Select a good voice (Prefer standard English)
-            const voices = synth.getVoices();
-            const preferred = voices.find(v => v.name.includes('Google US English')) || voices[0];
-            if(preferred) currentUtterance.voice = preferred;
+            if(currentIndex >= flatSentences.length) {
+                togglePlayback(); // End of book
+                return;
+            }
 
-            // When this line finishes, auto-play the next one
-            currentUtterance.onend = () => {
-                if (isPlaying) {
+            const utterance = new SpeechSynthesisUtterance(flatSentences[currentIndex]);
+            utterance.rate = 1.0; 
+            
+            // CRITICAL: When this line finishes, move the "Phantom Audio" forward
+            utterance.onend = () => {
+                if(!audioEl.paused) {
                     currentIndex++;
-                    if (currentIndex < flatContent.length) {
-                        speakLine(currentIndex);
-                        updateUI();
-                    } else {
-                        isPlaying = false;
-                        updatePlayButton();
-                    }
+                    updateUI();
+                    speakCurrentLine();
                 }
             };
 
-            currentUtterance.onerror = (e) => console.error("TTS Error", e);
-
-            synth.speak(currentUtterance);
-            
-            // Update the Lock Screen Metadata
-            updateMediaSessionMetadata();
+            synth.speak(utterance);
         }
 
-        // 3. CONTROLS
-        function togglePlay() {
-            const silentTrack = document.getElementById('silent-track');
-            
-            if (isPlaying) {
-                // PAUSE
-                synth.cancel();
-                silentTrack.pause();
-                isPlaying = false;
-            } else {
-                // PLAY
-                // We must play the silent track to activate the OS Media Session
-                silentTrack.play().catch(e => console.log("Audio autoplay blocked", e));
-                
-                isPlaying = true;
-                speakLine(currentIndex);
-            }
-            updatePlayButton();
-        }
-
-        function playNext() {
-            if (currentIndex < flatContent.length - 1) {
-                currentIndex++;
-                updateUI();
-                if (isPlaying) speakLine(currentIndex);
-            }
-        }
-
-        function playPrev() {
-            if (currentIndex > 0) {
-                currentIndex--;
-                updateUI();
-                if (isPlaying) speakLine(currentIndex);
-            }
-        }
-
-        function changeSpeed() {
-            const speeds = [1.0, 1.25, 1.5, 2.0, 0.75];
-            let idx = speeds.indexOf(rate);
-            rate = speeds[(idx + 1) % speeds.length];
-            document.getElementById('speed-btn').innerText = rate + "x Speed";
-            
-            // If playing, restart current line with new speed
-            if (isPlaying) speakLine(currentIndex);
-        }
-
-        // 4. UI UPDATES
+        // --- 5. CONTROL BINDINGS ---
+        
         function updateUI() {
-            const percent = (currentIndex / flatContent.length) * 100;
-            document.getElementById('progress-bar').style.width = percent + "%";
-            document.getElementById('current-line-text').innerText = flatContent[currentIndex];
-            document.getElementById('time-current').innerText = currentIndex; // Showing line number instead of time
-            document.getElementById('time-total').innerText = flatContent.length;
-        }
-
-        function updatePlayButton() {
-            document.getElementById('play-icon').classList.toggle('hidden', isPlaying);
-            document.getElementById('pause-icon').classList.toggle('hidden', !isPlaying);
-        }
-
-        function seek(event) {
-            const container = event.currentTarget;
-            const clickX = event.offsetX;
-            const width = container.clientWidth;
-            const percent = clickX / width;
+            const slider = document.getElementById('seek-slider');
+            slider.value = currentIndex;
+            updateSubtitle();
+            document.getElementById('curr-time').innerText = currentIndex + 1;
             
-            currentIndex = Math.floor(percent * flatContent.length);
-            updateUI();
-            if (isPlaying) speakLine(currentIndex);
+            // Sync Phantom Audio position to current text index (approximate)
+            // This ensures if we switch back to the tab, the audio element isn't wildly off
+            // But mostly, we ignore the audio's actual time and use it just as a 'playing' state holder
         }
 
-        // 5. NOTIFICATION CENTER MAGIC (Media Session API)
+        function updateSubtitle() {
+            document.getElementById('subtitle-text').innerText = flatSentences[currentIndex] || "End of Scroll.";
+        }
+
+        // User drags the slider
+        function userScrub(val) {
+            currentIndex = parseInt(val);
+            updateUI();
+            if(!audioEl.paused) {
+                speakCurrentLine();
+            }
+        }
+
+        function skip(dir) {
+            let newIdx = currentIndex + dir;
+            if(newIdx >= 0 && newIdx < flatSentences.length) {
+                currentIndex = newIdx;
+                updateUI();
+                if(!audioEl.paused) speakCurrentLine();
+            }
+        }
+
+        function formatTime(val) { return val; } // Simplified to just show sentence count
+
+        // --- 6. NOTIFICATION BAR INTEGRATION ---
         function setupMediaSession() {
             if ('mediaSession' in navigator) {
-                navigator.mediaSession.setActionHandler('play', togglePlay);
-                navigator.mediaSession.setActionHandler('pause', togglePlay);
-                navigator.mediaSession.setActionHandler('previoustrack', playPrev);
-                navigator.mediaSession.setActionHandler('nexttrack', playNext);
-            }
-        }
-
-        function updateMediaSessionMetadata() {
-            if ('mediaSession' in navigator && book) {
                 navigator.mediaSession.metadata = new MediaMetadata({
-                    title: book.title,
-                    artist: book.author,
-                    album: "Veridian Scriptorium",
+                    title: bookData.title,
+                    artist: bookData.author,
+                    album: "Veridian Archive",
                     artwork: [
-                        { src: 'https://via.placeholder.com/512/D4AF37/000000?text=V', sizes: '512x512', type: 'image/png' }
+                        { src: "https://via.placeholder.com/512/D4AF37/000000?text=V", sizes: "512x512", type: "image/png" }
                     ]
+                });
+
+                // Hardware Controls
+                navigator.mediaSession.setActionHandler('play', togglePlayback);
+                navigator.mediaSession.setActionHandler('pause', togglePlayback);
+                
+                navigator.mediaSession.setActionHandler('previoustrack', () => skip(-1));
+                navigator.mediaSession.setActionHandler('nexttrack', () => skip(1));
+                
+                // Scrubbing from Lock Screen
+                navigator.mediaSession.setActionHandler('seekto', (details) => {
+                   // This is approximate since we map time to sentences
+                   // But it allows the slider in notification center to work roughly
                 });
             }
         }
+        
+        // Safety: If the phantom audio ends naturally, stop the speaking
+        audioEl.onended = () => {
+            synth.cancel();
+            togglePlayback();
+        };
+
     </script>
 </body>
-  </html>
-  
+</html>
